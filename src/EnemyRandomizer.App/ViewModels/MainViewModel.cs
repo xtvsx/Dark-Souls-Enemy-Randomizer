@@ -75,7 +75,7 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
             {
                 if (e.PropertyName == nameof(OptionViewModel.Value))
                 {
-                    UpdateEnabledStates();
+                    UpdateOptionStates();
                 }
             };
         }
@@ -84,6 +84,7 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
             .Select(t => new OptionTabViewModel(t.Title, _allOptions.Where(o => o.Definition.Tab == t.Id).ToList()))
             .ToList();
         SelectedTab = Tabs[0];
+        UpdateOptionStates();
 
         _installation = installation;
         _baseTitle = $"{app.Value.Title} v{GetVersion()} (.NET)";
@@ -219,7 +220,7 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
         SelectedEnemyConfig = EnemyConfigNames.Contains(normalized.EnemyConfig)
             ? normalized.EnemyConfig
             : RandomizerSettings.DefaultEnemyConfig;
-        UpdateEnabledStates();
+        UpdateOptionStates();
     }
 
     [RelayCommand]
@@ -408,12 +409,20 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
         SelectedEnemyConfig = EnemyConfigNames.Contains(selected) ? selected : RandomizerSettings.DefaultEnemyConfig;
     }
 
-    private void UpdateEnabledStates()
+    /// <summary>Re-evaluates which options are enabled and which are shown after any value changed.</summary>
+    private void UpdateOptionStates()
     {
         var values = _allOptions.ToDictionary(o => o.Key, o => o.Value, StringComparer.OrdinalIgnoreCase);
+        int ValueOf(string key) => values.TryGetValue(key, out var v) ? v : int.MinValue;
         foreach (var option in _allOptions)
         {
-            option.UpdateEnabled(key => values.TryGetValue(key, out var v) ? v : int.MinValue);
+            option.UpdateEnabled(ValueOf);
+            option.UpdateVisible(ValueOf);
+        }
+
+        foreach (var tab in Tabs)
+        {
+            tab.RefreshVisibility();
         }
     }
 

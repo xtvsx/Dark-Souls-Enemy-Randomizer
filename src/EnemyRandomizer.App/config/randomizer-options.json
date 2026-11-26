@@ -7,15 +7,15 @@
     ],
     "Options": [
       {
-        "Key": "RandomizeMode", "LegacyIndex": 21, "Tab": "main", "Kind": "Choice", "Title": "Randomize method:", "Default": 0,
+        "Key": "RandomizeMode", "LegacyIndex": 21, "Tab": "main", "Kind": "Choice", "Title": "Randomize method:", "Default": 0, "Presentation": "Cards",
         "Choices": [
-          { "Value": 0, "Label": "Random", "Description": "Every enemy is replaced with a randomly drawn enemy. The same enemy can appear many times." },
-          { "Value": 1, "Label": "Shuffle", "Description": "The existing enemies are shuffled between the spots, so every enemy of the original game appears exactly once. Enemies only go where they fit. Bosses only swap with bosses (99% chance each).\nReplacement chance, difficulty mode, type replacement and 'prevent same' have no effect." }
+          { "Value": 0, "Label": "Random", "Summary": "Draw any enemy for every spot.", "Description": "Every enemy is replaced with a randomly drawn enemy. The same enemy can appear many times." },
+          { "Value": 1, "Label": "Shuffle", "Summary": "Move the enemies you already have.", "Description": "The existing enemies are shuffled between the spots, so every enemy of the original game appears exactly once. Enemies only go where they fit. Bosses only swap with bosses (99% chance each).\nReplacement chance, difficulty mode, type replacement and 'prevent same' have no effect." }
         ]
       },
       {
         "Key": "ShuffleScope", "LegacyIndex": 22, "Tab": "main", "Kind": "Choice", "Title": "Shuffle scope:", "Default": 1,
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 1 ] } ],
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 1 ] } ],
         "Choices": [
           { "Value": 0, "Label": "Per area", "Description": "Enemies are only shuffled within their own area." },
           { "Value": 1, "Label": "Whole game", "Description": "Enemies are shuffled across all areas." }
@@ -23,7 +23,7 @@
       },
       {
         "Key": "ShuffleAsylumEasy", "LegacyIndex": 23, "Tab": "main", "Kind": "Choice", "Title": "Easy asylum (shuffle):", "Default": 1,
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 1 ] } ],
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 1 ] } ],
         "Choices": [
           { "Value": 1, "Label": "Enabled", "Description": "Only beginner enemies and simple bosses can spawn in the Northern Undead Asylum." },
           { "Value": 0, "Label": "Disabled", "Description": "Any enemy that fits can spawn in the Asylum." }
@@ -40,7 +40,7 @@
       },
       {
         "Key": "DifficultyMode", "LegacyIndex": 5, "Tab": "main", "Kind": "Choice", "Title": "Mode:", "Default": 3,
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
         "Choices": [
           { "Value": 4, "Label": "Difficulty curve + easy asylum", "Description": "Enemies will be replaced with enemies from other areas while still trying to maintain some sort of a difficulty curve. Uses a limited list for asylum to keep it easier for certain, even on looser difficulty settings.\nNOTICE: not really compatible with 'Replace normals only with bosses' and 'Replace bosses only with normals', you'll be seeing lots of unmodified enemies in those modes." },
           { "Value": 1, "Label": "Random with difficulty curve", "Description": "Enemies will be replaced with enemies from other areas while still trying to maintain some sort of a difficulty curve.\nNOTICE: not really compatible with 'Replace normals only with bosses' and 'Replace bosses only with normals', you'll be seeing lots of unmodified enemies in those modes." },
@@ -59,6 +59,7 @@
       },
       {
         "Key": "DiffStrictness", "LegacyIndex": 10, "Tab": "main", "Kind": "Choice", "Title": "Difficulty strictness:", "Default": 1,
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
         "EnabledWhen": [ { "Option": "DifficultyMode", "Values": [ 1, 4 ] } ],
         "Choices": [
           { "Value": 0, "Label": "Strict", "Description": "Difficulty curve is followed quite strictly: harder enemies can still appear in early-game but it's somewhat rare. Least variety, but most consistent difficulty.\n(Only has effect if mode is set to 'Random with difficulty curve')" },
@@ -86,7 +87,7 @@
       {
         "Key": "ReplaceChance", "LegacyIndex": 6, "Tab": "main", "Kind": "Slider", "Title": "Replacement chance (%):", "Default": 100, "Min": 0, "Max": 100,
         "Description": "Chance that an enemy/boss will be replaced at all.",
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ]
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ]
       },
       {
         "Key": "BossChanceNormals", "LegacyIndex": 7, "Tab": "main", "Kind": "Slider", "Title": "Boss chance [Normal Enemies](%):", "Default": 10, "Min": 0, "Max": 100,
@@ -107,7 +108,7 @@
       },
       {
         "Key": "TypeReplacement", "LegacyIndex": 14, "Tab": "other", "Kind": "Choice", "Title": "Type Replacement:", "Default": 1,
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
         "Choices": [
           { "Value": 0, "Label": "Enabled", "Description": "Type replacement enabled: if within one area there were originally multiple of the same enemy, then all of those enemies will be replaced with one type of enemy. For example: all Silver Knights in Anor Londo would be replaced with Darkwraiths, instead of individual Silver Knights being replaced by different enemies." },
           { "Value": 2, "Label": "Enabled, except roaming bosses.", "Description": "Type replacement enabled, except for bosses that replace normal enemies (roaming bosses)." },
@@ -145,7 +146,7 @@
       },
       {
         "Key": "PreventSame", "LegacyIndex": 16, "Tab": "other", "Kind": "Choice", "Title": "Prevent replacement with same enemy:", "Default": 1,
-        "EnabledWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
+        "VisibleWhen": [ { "Option": "RandomizeMode", "Values": [ 0 ] } ],
         "Choices": [
           { "Value": 0, "Label": "Enabled", "Description": "Enemies are not allowed to be replaced with the same enemy (so a Hollow can't be replaced with another Hollow). Can result in less boss variety with the difficulty curve option in early game." },
           { "Value": 1, "Label": "Disabled", "Description": "Enemies can be replaced with the same enemy (e.g. a Hollow can be replaced with a Hollow)." }

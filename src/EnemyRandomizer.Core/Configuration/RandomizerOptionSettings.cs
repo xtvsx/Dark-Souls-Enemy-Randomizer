@@ -40,6 +40,7 @@ public sealed class RandomizerOptionSettings : IValidatableSettings
 
             errors.AddRange(option.Validate());
             errors.AddRange(option.EnabledWhen.SelectMany(c => c.Validate(option.Key, this)));
+            errors.AddRange(option.VisibleWhen.SelectMany(c => c.Validate(option.Key, this)));
         }
 
         return errors;
@@ -92,6 +93,14 @@ public sealed class OptionDefinition
     /// <summary>The option only has an effect when ANY of these conditions holds. Empty = always.</summary>
     public List<OptionCondition> EnabledWhen { get; set; } = [];
 
+    /// <summary>The option is only shown when ANY of these conditions holds. Empty = always shown.</summary>
+    public List<OptionCondition> VisibleWhen { get; set; } = [];
+
+    /// <summary>How a choice option is drawn: empty = radio group, <see cref="CardsPresentation"/> = selectable cards.</summary>
+    public string Presentation { get; set; } = "";
+
+    public const string CardsPresentation = "Cards";
+
     /// <summary>True when <paramref name="value"/> is allowed for this option.</summary>
     public bool IsValidValue(int value) =>
         Kind == OptionKind.Choice
@@ -127,6 +136,11 @@ public sealed class OptionDefinition
             }
         }
 
+        if (Presentation.Length > 0 && (Presentation != CardsPresentation || Kind != OptionKind.Choice))
+        {
+            errors.Add($"Option '{Key}' presentation '{Presentation}' is not supported (only '{CardsPresentation}' on choice options).");
+        }
+
         if (!IsValidValue(Default))
         {
             errors.Add($"Option '{Key}' default {Default} is not an allowed value.");
@@ -141,6 +155,9 @@ public sealed class OptionChoice
     public int Value { get; set; }
     public string Label { get; set; } = "";
     public string Description { get; set; } = "";
+
+    /// <summary>One short line shown under the label when the choice is drawn as a card.</summary>
+    public string Summary { get; set; } = "";
 }
 
 /// <summary>Holds when option <see cref="Option"/> has one of <see cref="Values"/>.</summary>

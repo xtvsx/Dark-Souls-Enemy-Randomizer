@@ -31,4 +31,4 @@ Run before tagging a release. Use a generated or real game folder.
 
 ## Look
 - [ ] Light, dark and Windows high-contrast mode; check primary button, radio groups, menu popups, DataGrid.
-- [ ] 100%, 150% and 200% display scaling; resize to 900x560 (nothing clipped, panes keep usable widths).
+- [ ] 100%, 150% and 200% display scaling; resize to 960x640 (nothing clipped, panes keep usable widths).

@@ -156,6 +156,38 @@ public class MainViewModelTests
         Assert.Equal(enabled, !Option(vm, "BossChanceBosses").DisplayTitle.StartsWith("[No effect]", StringComparison.Ordinal));
     }
 
+    private static readonly string[] RandomOnly = ["ReplaceChance", "DifficultyMode", "DiffStrictness", "TypeReplacement", "PreventSame"];
+    private static readonly string[] ShuffleOnly = ["ShuffleScope", "ShuffleAsylumEasy"];
+
+    [Fact]
+    public void Random_mode_hides_the_shuffle_options()
+    {
+        var vm = Create();
+
+        Assert.All(RandomOnly, key => Assert.True(Option(vm, key).IsVisible, key));
+        Assert.All(ShuffleOnly, key => Assert.False(Option(vm, key).IsVisible, key));
+        Assert.Equal(["RandomizeMode"], vm.SelectedTab.CardOptions.Select(o => o.Key));
+        Assert.DoesNotContain(vm.SelectedTab.VisibleOptions, o => o.Key == "ShuffleScope");
+    }
+
+    [Fact]
+    public void Shuffle_mode_hides_the_random_only_options_and_shows_its_own()
+    {
+        var vm = Create();
+
+        Option(vm, "RandomizeMode").Value = 1;
+
+        Assert.All(RandomOnly, key => Assert.False(Option(vm, key).IsVisible, key));
+        Assert.All(ShuffleOnly, key => Assert.True(Option(vm, key).IsVisible, key));
+        Assert.All(RandomOnly, key => Assert.DoesNotContain(vm.SelectedTab.VisibleOptions, o => o.Key == key)); // main tab
+        Assert.All(ShuffleOnly, key => Assert.Contains(vm.SelectedTab.GridOptions, o => o.Key == key));
+        Assert.DoesNotContain(vm.SelectedTab.GridOptions, o => o.IsCard);
+
+        Option(vm, "RandomizeMode").Value = 0;
+        Assert.All(RandomOnly.Where(k => k is not ("TypeReplacement" or "PreventSame")), // those two are on the other tab
+            key => Assert.Contains(vm.SelectedTab.GridOptions, o => o.Key == key));
+    }
+
     [Fact]
     public void Boss_chance_for_normals_is_enabled_by_normal_or_npc_mode()
     {

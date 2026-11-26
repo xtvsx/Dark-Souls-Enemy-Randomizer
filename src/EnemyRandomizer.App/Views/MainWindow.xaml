@@ -12,7 +12,7 @@
         Style="{StaticResource AppWindow}"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="1200" Height="760" MinWidth="900" MinHeight="560"
+        Width="1100" Height="820" MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
@@ -32,6 +32,34 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </GroupBox>
+    </DataTemplate>
+
+    <!-- Option drawn as selectable cards (the randomize method): equal-width cards in one row -->
+    <DataTemplate x:Key="CardOptionTemplate" DataType="{x:Type opt:ChoiceOptionViewModel}">
+      <ItemsControl ItemsSource="{Binding Choices}" IsTabStop="False" IsEnabled="{Binding IsEnabled}"
+                    b:OptionHelp.TrackOption="True"
+                    AutomationProperties.Name="{Binding Definition.Title}"
+                    AutomationProperties.HelpText="{Binding Description}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Rows="1" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type opt:ChoiceViewModel}">
+            <RadioButton Style="{StaticResource CardRadioButton}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                         b:OptionHelp.TrackChoice="True"
+                         AutomationProperties.Name="{Binding Label}"
+                         AutomationProperties.HelpText="{Binding Description}">
+              <StackPanel>
+                <TextBlock Text="{Binding Label}" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,2,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}" />
+              </StackPanel>
+            </RadioButton>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </DataTemplate>
 
     <!-- Percentage slider option -->
@@ -160,13 +188,17 @@
 
     <!-- Options of the selected category -->
     <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
-      <ItemsControl ItemsSource="{Binding SelectedTab.Options}" IsTabStop="False">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel ItemWidth="290" />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-      </ItemsControl>
+      <StackPanel>
+        <ItemsControl ItemsSource="{Binding SelectedTab.CardOptions}" ItemTemplate="{StaticResource CardOptionTemplate}"
+                      IsTabStop="False" Margin="0,0,8,12" />
+        <ItemsControl ItemsSource="{Binding SelectedTab.GridOptions}" IsTabStop="False">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel ItemWidth="290" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </StackPanel>
     </ScrollViewer>
 
     <!-- Detail pane -->
@@ -175,7 +207,7 @@
       <Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6"
                       Visibility="{Binding HasStartupErrors, Converter={StaticResource InverseBoolToVisibility}}">
-          <ItemsControl ItemsSource="{Binding SelectedTab.Options}" ItemTemplate="{StaticResource DescriptionTemplate}"
+          <ItemsControl ItemsSource="{Binding SelectedTab.VisibleOptions}" ItemTemplate="{StaticResource DescriptionTemplate}"
                         IsTabStop="False" />
         </ScrollViewer>
 

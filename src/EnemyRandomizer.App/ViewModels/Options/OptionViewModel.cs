@@ -44,6 +44,13 @@ public abstract partial class OptionViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(DisplayTitle))]
     public partial bool IsEnabled { get; set; } = true;
 
+    /// <summary>False while another option hides this one (<c>VisibleWhen</c>); hidden options are not listed at all.</summary>
+    [ObservableProperty]
+    public partial bool IsVisible { get; set; } = true;
+
+    /// <summary>Drawn as a selectable card instead of a radio group.</summary>
+    public bool IsCard => Definition.Presentation == OptionDefinition.CardsPresentation;
+
     [ObservableProperty]
     public partial DescriptionState State { get; set; }
 
@@ -105,6 +112,14 @@ public abstract partial class OptionViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(valueOf);
         IsEnabled = Definition.EnabledWhen.Count == 0
                     || Definition.EnabledWhen.Any(c => c.Values.Contains(valueOf(c.Option)));
+    }
+
+    /// <summary>Updates <see cref="IsVisible"/> from the option's conditions (any condition true = visible).</summary>
+    public void UpdateVisible(Func<string, int> valueOf)
+    {
+        ArgumentNullException.ThrowIfNull(valueOf);
+        IsVisible = Definition.VisibleWhen.Count == 0
+                    || Definition.VisibleWhen.Any(c => c.Values.Contains(valueOf(c.Option)));
     }
 
     protected virtual void OnValueChanged()

@@ -189,6 +189,41 @@
     </Setter>
   </Style>
 
+  <!-- Selectable card (randomize method): same selection language as the category list (accent bar + soft fill). -->
+  <Style x:Key="CardRadioButton" TargetType="RadioButton">
+    <Setter Property="Margin" Value="0,0,8,0" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Chrome" Padding="14,10" CornerRadius="4" SnapsToDevicePixels="True"
+                  Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                  BorderThickness="1">
+            <Grid>
+              <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Margin="-14,-10,0,-10"
+                      Background="Transparent" CornerRadius="3,0,0,3" />
+              <ContentPresenter RecognizesAccessKey="True" />
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HighlightBrush}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+              <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+              <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.55" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style TargetType="TextBox">
     <Setter Property="Padding" Value="4,3" />
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />

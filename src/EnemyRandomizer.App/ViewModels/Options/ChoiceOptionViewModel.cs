@@ -37,6 +37,9 @@ public sealed class ChoiceViewModel(ChoiceOptionViewModel owner, OptionChoice de
 
     public string Description => definition.Description;
 
+    /// <summary>Short line shown under the label when the option is drawn as cards.</summary>
+    public string Summary => definition.Summary;
+
     public bool IsSelected
     {
         get => Owner.Value == Value;

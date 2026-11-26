@@ -65,6 +65,22 @@ public class RandomizerOptionSettingsTests
     }
 
     [Fact]
+    public void Visibility_condition_must_reference_existing_option()
+    {
+        var settings = Valid();
+        settings.Options[1].VisibleWhen = [new OptionCondition { Option = "Missing", Values = [1] }];
+        Assert.Contains(settings.Validate(), e => e.Contains("unknown option 'Missing'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Only_choice_options_can_be_cards()
+    {
+        var settings = Valid();
+        settings.Options[1].Presentation = "Cards"; // option 1 is a slider
+        Assert.Contains(settings.Validate(), e => e.Contains("presentation", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Condition_must_reference_existing_option()
     {
         var settings = Valid();
