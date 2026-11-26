@@ -13,6 +13,9 @@ public static class LegacyConfigString
     private const string Separator = "/-/";
     private const string SeedQuote = "'''";
 
+    /// <summary>Number of options of v0.4.x config strings (older strings stay valid, see <see cref="TryParse"/>).</summary>
+    private const int OldestOptionCount = 21;
+
     public static string Format(RandomizerSettings settings, RandomizerOptionSettings options)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -41,15 +44,24 @@ public static class LegacyConfigString
 
         var parts = (text ?? "").Trim().Split(Separator);
         var expected = options.Options.Count + 1;
-        if (parts.Length != expected)
+        var oldest = OldestOptionCount + 1;
+        if (parts.Length > expected || parts.Length < Math.Min(oldest, expected))
         {
             error = $"expected {expected} fields separated by '{Separator}', found {parts.Length}.";
             return false;
         }
 
+        // Strings from older versions have fewer option fields: the missing (newer) options keep their default.
+        var optionFields = parts.Length - 1;
         var values = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var option in options.Options)
         {
+            if (option.LegacyIndex >= optionFields)
+            {
+                values[option.Key] = option.Default;
+                continue;
+            }
+
             var part = parts[option.LegacyIndex];
             if (!int.TryParse(part, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
                 || !option.IsValidValue(value))

@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: `M
 This project is a .NET 10 migration and fork of <https://github.com/xtvsx/Dark-Souls-Enemy-Randomizer>.
 Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
 
+### Added
+- **Shuffle mode** ("Randomize method" option): the existing enemies are permuted between the spots, so every enemy
+  appears exactly once. Normal spots only get normal enemies, boss spots only bosses (each boss spot is shuffled with a
+  99% chance). Enemies only go where they fit (size, banned pairings, skip rules). NPCs, mimics (when kept) and disabled
+  enemies keep their place. "Shuffle scope" shuffles per area or across the whole game; "Easy asylum (shuffle)" limits the
+  Northern Undead Asylum to the easy enemy and boss lists. Config strings of v0.4.x still parse (new options use defaults).
+
 ### Removed
 - Legacy Python build artifacts from `dist/` (`randomizer.exe`, `EnemyRandomizerv0412.zip`, `Enemy Randomizer ReadMe.txt`).
   `dist/enemyRandomizerData` stays: it is the shipped runtime data and is used by the app publish and the test projects.

@@ -261,6 +261,23 @@ public sealed class RandomizationRunTests : IDisposable
         Assert.Equal(firstEvents, File.ReadAllBytes(Game(_layout.Event("m10_00_00_00", GameEdition.Ptde))));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void Shuffle_mode_runs_for_both_scopes_and_is_deterministic(int scope)
+    {
+        CreateGame(GameEdition.Ptde);
+        var settings = Settings("shuffle seed", ("RandomizeMode", 1), ("ShuffleScope", scope));
+
+        var first = Randomize(GameEdition.Ptde, settings);
+        var firstMaps = _layout.Maps.Select(m => File.ReadAllBytes(Game(_layout.MapStudio(m.Id)))).ToList();
+        var second = Randomize(GameEdition.Ptde, settings);
+
+        Assert.True(first.Replaced > 0);
+        Assert.Equal(first.Replaced, second.Replaced);
+        Assert.Equal(firstMaps, _layout.Maps.Select(m => File.ReadAllBytes(Game(_layout.MapStudio(m.Id)))));
+    }
+
     private static readonly string[] CopiedFields =
         ["Model", "AI", "NPCParam", "EventEntityID", "AnimID", "X pos", "Y pos", "Z pos", "Rot X", "Rot Y", "Rot Z"];
 

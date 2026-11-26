@@ -143,6 +143,7 @@ public sealed class MapPlanApplier(
         ReplacementOutcome.MimicKept => "Mimic replacement disabled",
         ReplacementOutcome.NoFittingDifficulty => "Failed to find fitting enemy with appropriate difficulty",
         ReplacementOutcome.ModeOff => "Replacement mode is off",
+        ReplacementOutcome.ShuffleKept => "Shuffle kept the enemy",
         _ => "No valid replacement found",
     };
 }

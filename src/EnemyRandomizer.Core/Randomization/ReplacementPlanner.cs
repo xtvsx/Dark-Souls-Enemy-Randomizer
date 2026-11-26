@@ -16,7 +16,7 @@ public sealed record PlannerSettings(
 /// <c>randomizer_rng.py:817-991, 1417-1741</c>). Pure logic: reads no files and writes nothing; the result is
 /// applied to the game files by the infrastructure. One planner instance = one randomization run.
 /// </summary>
-public sealed class ReplacementPlanner
+public sealed partial class ReplacementPlanner
 {
     private const int NoEnemy = -4;
     private const int NoDifficultyMatch = -6;
@@ -95,6 +95,15 @@ public sealed class ReplacementPlanner
             _map.UsedEnemies.Add(chosen);
         }
 
+        return Place(row, creature, target, type, rules, enemy, edition);
+    }
+
+    /// <summary>Builds the replaced decision for <paramref name="enemy"/> (AI/param pick, soul variant, position).</summary>
+    private CreatureDecision Place(
+        int row, MapCreature creature, ReplacementTarget target, EnemyType type, IReadOnlyList<CreatureRule> rules,
+        EnemyDefinition enemy, GameEdition edition)
+    {
+        var part = creature.PartName;
         var pair = enemy.Ais.Count == 1 ? 0 : _random.Between(0, enemy.Ais.Count - 1);
         var param = enemy.Params[pair];
         if (type == EnemyType.Normal && enemy.Type == EnemyType.Boss && !_settings.Rules.NoSoulVariant.Contains(enemy.Id))

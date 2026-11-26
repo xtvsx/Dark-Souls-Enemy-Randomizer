@@ -1,5 +1,6 @@
 using EnemyRandomizer.Core;
 using EnemyRandomizer.Core.Configuration;
+using EnemyRandomizer.Core.Settings;
 using EnemyRandomizer.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,8 +92,34 @@ public sealed class ShippedConfigurationTests : IDisposable
 
         var actual = string.Join("/-/", options.OrderBy(o => o.LegacyIndex).Select(o => o.Default));
 
-        Assert.Equal(21, options.Count);
-        Assert.Equal(legacyDefaults, actual);
+        // Shuffle options (21-23) were added after v0.4.x: random mode, whole game, easy asylum.
+        Assert.Equal(24, options.Count);
+        Assert.Equal(legacyDefaults + "/-/0/-/1/-/1", actual);
+    }
+
+    [Fact]
+    public void Config_strings_of_v0_4_still_parse_and_use_shuffle_defaults()
+    {
+        const string v04 = "1/-/2/-/0/-/1/-/0/-/3/-/100/-/10/-/90/-/1/-/1/-/0/-/50/-/1/-/1/-/1/-/1/-/0/-/0/-/0/-/1/-/'''abc'''";
+        var options = Get<RandomizerOptionSettings>();
+
+        Assert.True(LegacyConfigString.TryParse(v04, options, "Default", out var settings, out var error), error);
+
+        Assert.Equal("abc", settings!.Seed);
+        Assert.Equal(0, settings["RandomizeMode"]);
+        Assert.Equal(1, settings["ShuffleScope"]);
+        Assert.Equal(1, settings["ShuffleAsylumEasy"]);
+        Assert.Equal(3, settings["DifficultyMode"]);
+    }
+
+    [Fact]
+    public void Easy_asylum_indices_exist_in_the_shipped_catalog()
+    {
+        var easy = Get<MapPatchSettings>().EasyAsylum;
+        var catalogSize = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "data", "valid_new.txt"))
+            .Count(l => l.Length > 0) - 1;
+
+        Assert.All(easy.NormalEnemyIndices.Concat(easy.BossIndices), i => Assert.InRange(i, 0, catalogSize - 1));
     }
 
     [Fact]

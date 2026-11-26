@@ -136,6 +136,9 @@ public sealed class RandomizationRun(
         WriteHeader(log, reference, options, enemyConfig, edition, source);
         bossSouls.Apply(edition, options, transaction);
 
+        // Shuffle mode plans all maps at once (the pool can span the whole game); copying a layout never shuffles.
+        var shufflePlans = source is null && options.ShuffleMode ? PlanShuffle(planner, maps, edition) : null;
+
         var replaced = 0;
         foreach (var map in maps)
         {
@@ -157,7 +160,7 @@ public sealed class RandomizationRun(
             var modelStart = map.StartIndices[edition];
             var mapLayout = source?.Maps[map.Id];
             var plan = mapLayout is null
-                ? planner.PlanMap(map.Id, edition, creatures)
+                ? shufflePlans?[map.Id] ?? planner.PlanMap(map.Id, edition, creatures)
                 : planner.PlanMapFromLayout(map.Id, edition, creatures, mapLayout, modelStart);
 
             // v0.4.x continues one id after the saved "levID" (the next free id) when copying; kept for identical files.
@@ -190,6 +193,21 @@ public sealed class RandomizationRun(
         }
 
         return new RandomizationResult(seed, replaced, logFile, layoutFile);
+    }
+
+    private Dictionary<string, MapPlan> PlanShuffle(ReplacementPlanner planner, IReadOnlyList<MapDefinition> maps, GameEdition edition)
+    {
+        var shuffleMaps = maps.Select(map =>
+        {
+            var msb = MsbFile.Read(File.ReadAllBytes(Path.Combine(paths.MapStudioCopyDirectory, map.Id + ".msb")));
+            var creatures = data.LoadOriginalEnemies(map.Id, edition)
+                .Select((c, row) => new MapCreature(c.PartName, c.Size, row < msb.Creatures.Rows.Count ? msb.Creatures.Rows[row].GetInt("AnimID") : -1))
+                .ToList();
+            return new ShuffleMap(map.Id, creatures);
+        }).ToList();
+
+        var plans = planner.PlanShuffle(edition, shuffleMaps);
+        return plans.ToDictionary(p => p.MapId);
     }
 
     /// <summary>

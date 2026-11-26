@@ -46,6 +46,15 @@ public sealed record RunOptions(RandomizerSettings Settings)
     public bool DisableRoamingBossRespawn => Settings["RespawningBosses"] == 1;
     public bool HostileNpcs => Settings["HostileNpcs"] == 1;
 
+    /// <summary>True when enemies are shuffled between the spots instead of drawn at random.</summary>
+    public bool ShuffleMode => Settings["RandomizeMode"] == 1;
+
+    /// <summary>True = one pool for all maps, false = every map is shuffled on its own.</summary>
+    public bool ShuffleWholeGame => Settings["ShuffleScope"] == 1;
+
+    /// <summary>Shuffle mode only: the asylum gets beginner enemies and simple bosses only.</summary>
+    public bool ShuffleAsylumEasy => Settings["ShuffleAsylumEasy"] == 1;
+
     /// <summary>Raw value of any option (used by config conditions).</summary>
     public int Value(string key) => Settings.Values.TryGetValue(key, out var value) ? value : int.MinValue;
 }

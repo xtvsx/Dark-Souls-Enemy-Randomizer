@@ -131,7 +131,7 @@ public class MainViewModelTests
         var vm = await Started();
 
         Assert.Equal(3, vm.Tabs.Count);
-        Assert.Equal(21, vm.Tabs.Sum(t => t.Options.Count));
+        Assert.Equal(24, vm.Tabs.Sum(t => t.Options.Count));
         Assert.Equal(1, vm.Current["BossMode"]);
         Assert.Equal(3, vm.Current["DifficultyMode"]);
         Assert.Contains("PTDE", vm.EditionText, StringComparison.Ordinal);
@@ -415,7 +415,7 @@ public class TextConfigViewModelTests
         vm.GenerateCommand.Execute(null);
 
         // randomizer.py:1501 RestoreDefaultSettings
-        Assert.Equal("1/-/2/-/0/-/1/-/0/-/3/-/100/-/10/-/90/-/1/-/1/-/0/-/50/-/1/-/1/-/1/-/1/-/0/-/0/-/0/-/1/-/''''''", vm.ConfigText);
+        Assert.Equal("1/-/2/-/0/-/1/-/0/-/3/-/100/-/10/-/90/-/1/-/1/-/0/-/50/-/1/-/1/-/1/-/1/-/0/-/0/-/0/-/1/-/0/-/1/-/1/-/''''''", vm.ConfigText);
     }
 
     [Fact]

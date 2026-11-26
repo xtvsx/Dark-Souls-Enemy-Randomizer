@@ -31,6 +31,9 @@ public enum ReplacementOutcome
 
     /// <summary>The difficulty curve found no enemy that fits.</summary>
     NoFittingDifficulty,
+
+    /// <summary>Shuffle mode: the creature keeps its enemy (boss roll failed or nothing else fits).</summary>
+    ShuffleKept,
 }
 
 /// <summary>What happens to one creature row of a map. Only <see cref="ReplacementOutcome.Replaced"/> rows change.</summary>
