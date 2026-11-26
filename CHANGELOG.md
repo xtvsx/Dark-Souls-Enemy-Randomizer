@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: `M
 This project is a .NET 10 migration and fork of <https://github.com/xtvsx/Dark-Souls-Enemy-Randomizer>.
 Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
 
+### Removed
+- Legacy Python build artifacts from `dist/` (`randomizer.exe`, `EnemyRandomizerv0412.zip`, `Enemy Randomizer ReadMe.txt`).
+  `dist/enemyRandomizerData` stays: it is the shipped runtime data and is used by the app publish and the test projects.
+
 ### Code review fixes
 #### Fixed
 - A cancelled or failed randomization or placement copy now puts every game file back to its state before the run

@@ -69,3 +69,7 @@ script/
 sfx/
 otherLogs/
 /text/
+
+## Legacy release artifacts
+dist/*.exe
+dist/*.zip

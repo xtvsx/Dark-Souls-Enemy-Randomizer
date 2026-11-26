@@ -7,7 +7,7 @@ Supports **Dark Souls: Prepare to Die Edition** and **Dark Souls Remastered**.
 > **About this fork:** this project is a **.NET 10 migration** of the Python/Tkinter Dark Souls Enemy Randomizer
 > (v0.4.1.2), forked from <https://github.com/everKalle/Dark-Souls-Enemy-Randomizer>.
 > The migration is feature complete (not yet checked against a real game install, see the CHANGELOG). The last Python build
-> stays in `dist/`. See [CHANGELOG.md](CHANGELOG.md).
+> is available in git history (commit `cec436b`, v0.4.1.2). See [CHANGELOG.md](CHANGELOG.md).
 
 ## Thanks
 
