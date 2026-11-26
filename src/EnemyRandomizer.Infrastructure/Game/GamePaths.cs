@@ -18,7 +18,8 @@ public sealed class GamePaths : IGamePaths
         var folders = settings.DataFolders;
 
         GameDirectory = ResolveGameDirectory(settings.GameDirectory, baseDirectory);
-        DataDirectory = Path.Combine(GameDirectory, settings.DataFolder);
+        // The data folder ships next to the exe, so it must not follow a game folder chosen elsewhere.
+        DataDirectory = Path.Combine(Path.GetFullPath(baseDirectory), settings.DataFolder);
         CustomConfigDirectory = Path.Combine(DataDirectory, folders.CustomConfigs);
         ReplacementReferenceDirectory = Path.Combine(DataDirectory, folders.ReplacementReferences);
         OriginalEnemyReferenceDirectory = Path.Combine(DataDirectory, folders.OriginalEnemyReferences);

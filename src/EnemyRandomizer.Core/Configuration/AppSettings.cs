@@ -17,7 +17,7 @@ public sealed class AppSettings : IValidatableSettings
     /// <summary>Game install folder. Empty means the folder of the exe (the normal install).</summary>
     public string GameDirectory { get; set; } = "";
 
-    /// <summary>Randomizer data folder, relative to the game folder.</summary>
+    /// <summary>Randomizer data folder, relative to the exe folder.</summary>
     public string DataFolder { get; set; } = "";
 
     /// <summary>Sub folders inside <see cref="DataFolder"/>.</summary>

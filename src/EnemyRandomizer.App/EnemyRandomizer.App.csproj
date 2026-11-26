@@ -22,7 +22,7 @@
     <!-- JSON config stays next to the exe (also for single-file publish) so users can read and edit it. -->
     <Content Include="config\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <!-- Runtime data (enemy lists, AI references, events) ships beside the exe, as in v0.4.x. -->
-    <Content Include="..\..\dist\enemyRandomizerData\**\*" Link="enemyRandomizerData\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\..\dist\enemyRandomizerData\**\*" Link="enemyRandomizerData\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>

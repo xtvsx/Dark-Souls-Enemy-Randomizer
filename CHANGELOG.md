@@ -15,6 +15,10 @@ Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
   enemies keep their place. "Shuffle scope" shuffles per area or across the whole game; "Easy asylum (shuffle)" limits the
   Northern Undead Asylum to the easy enemy and boss lists. Config strings of v0.4.x still parse (new options use defaults).
 
+### Fixed
+- Choosing a game folder no longer makes startup fail with missing data files: `enemyRandomizerData` is now always
+  read from the exe folder instead of the chosen game folder.
+
 ### Removed
 - Legacy Python build artifacts from `dist/` (`randomizer.exe`, `EnemyRandomizerv0412.zip`, `Enemy Randomizer ReadMe.txt`).
   `dist/enemyRandomizerData` stays: it is the shipped runtime data and is used by the app publish and the test projects.
