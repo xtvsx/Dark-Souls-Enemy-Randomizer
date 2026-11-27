@@ -70,8 +70,6 @@ public static class AppHost
         services.AddTransient<TextConfigWindow>();
         services.AddTransient<EnemyConfigEditorViewModel>();
         services.AddTransient<EnemyConfigEditorWindow>();
-        services.AddTransient<AboutViewModel>();
-        services.AddTransient<AboutWindow>();
         services.AddTransient<BackupsViewModel>();
         services.AddTransient<BackupsWindow>();
         return services;
