@@ -5,9 +5,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Reference data: event files shipped with v0.4.1.2 and the dkscript sources they were built from. -->
+    <!-- Reference data: event files shipped with v0.4.1.2 and the dkscript sources they were built from (kept in samples/dkscript). -->
     <None Include="..\..\dist\enemyRandomizerData\emevd\**\*" Link="samples\emevd\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\..\legacy\python\eventscripts\**\*.dkscript" Link="samples\dkscript\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="samples\dkscript\**\*.dkscript" Link="samples\dkscript\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\dist\enemyRandomizerData\eventTemplates.dkscript" Link="samples\eventTemplates.dkscript" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
