@@ -11,7 +11,7 @@ public enum AppTheme
     Dark,
 }
 
-/// <summary>Swaps the colour dictionary at the front of the application resources.</summary>
+/// <summary>Switches the Fluent theme mode and swaps the colour dictionary at the front of the application resources.</summary>
 public static class ThemeService
 {
     private const string PersonalizeKey = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
@@ -28,6 +28,15 @@ public static class ThemeService
     public static void Apply(AppTheme mode)
     {
         var dark = mode == AppTheme.Dark || (mode == AppTheme.System && SystemPrefersDark());
+
+        // The built-in Fluent theme restyles every control; the palette below only colours our own surfaces.
+        Application.Current.ThemeMode = mode switch
+        {
+            AppTheme.Light => ThemeMode.Light,
+            AppTheme.Dark => ThemeMode.Dark,
+            _ => ThemeMode.System,
+        };
+
         var merged = Application.Current.Resources.MergedDictionaries;
         var palette = new ResourceDictionary { Source = dark ? DarkUri : LightUri };
 

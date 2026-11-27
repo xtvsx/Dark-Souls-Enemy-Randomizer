@@ -26,6 +26,16 @@ public class LegacyConfigStringTests
         Assert.Equal("0/-/75/-/'''my seed'''", LegacyConfigString.Format(settings, options));
     }
 
+    [Fact]
+    public void Parse_migrates_removed_values()
+    {
+        var options = TestOptions.Create();
+        options.Find("BossMode")!.ReplacedValues[7] = 0; // 7 used to exist
+
+        Assert.True(LegacyConfigString.TryParse("7/-/75/-/", options, "Default", out var settings, out _));
+        Assert.Equal(0, settings!["BossMode"]);
+    }
+
     [Theory]
     [InlineData("1/-/50")]                      // too few fields
     [InlineData("1/-/50/-/x/-/''''''")]         // too many fields
@@ -55,6 +65,16 @@ public class RandomizerSettingsTests
         Assert.Equal(50, normalized["Chance"]);    // missing -> default
         Assert.False(normalized.Values.ContainsKey("Removed"));
         Assert.Equal(RandomizerSettings.DefaultEnemyConfig, normalized.EnemyConfig);
+    }
+
+    [Fact]
+    public void Normalize_migrates_removed_values_instead_of_resetting_them()
+    {
+        var options = TestOptions.Create();
+        options.Find("BossMode")!.ReplacedValues[9] = 0;
+        var settings = new RandomizerSettings(new Dictionary<string, int> { ["BossMode"] = 9 }, "s", "");
+
+        Assert.Equal(0, settings.Normalize(options)["BossMode"]);
     }
 
     [Fact]

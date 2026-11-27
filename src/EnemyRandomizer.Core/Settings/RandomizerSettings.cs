@@ -44,7 +44,7 @@ public sealed record RandomizerSettings
         ArgumentNullException.ThrowIfNull(options);
         var values = options.Options.ToDictionary(
             o => o.Key,
-            o => Values.TryGetValue(o.Key, out var v) && o.IsValidValue(v) ? v : o.Default);
+            o => Values.TryGetValue(o.Key, out var v) && o.IsValidValue(o.Migrate(v)) ? o.Migrate(v) : o.Default);
         return new RandomizerSettings(values, Seed, EnemyConfig);
     }
 }

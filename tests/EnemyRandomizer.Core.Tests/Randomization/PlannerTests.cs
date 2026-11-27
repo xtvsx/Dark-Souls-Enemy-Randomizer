@@ -69,7 +69,6 @@ public class PlannerTests
         [
             new CreatureRule { Name = "skip", Parts = ["c2500_0099"], Skip = true },
             new CreatureRule { Name = "move", Maps = ["m10"], Parts = ["c2500_0001"], Position = [1, 2, 3], Rotation = [0, 90, 0] },
-            new CreatureRule { Name = "andre", Parts = ["c2640"], When = new OptionCondition { Option = "NpcMode", Values = [1, 3] }, ForcedEnemyId = "c5320", ForcedChancePercent = 40 },
         ],
     };
 
@@ -167,13 +166,6 @@ public class PlannerTests
 
         Assert.Equal(ReplacementOutcome.Replaced, decision.Outcome);
         Assert.False(decision.ChangeAi);
-    }
-
-    [Fact]
-    public void Andre_may_be_forced_to_gwyndolin()
-    {
-        var planner = Planner(new ScriptedRandom(1, 1, 0, 40), Settings(("NpcMode", 3)));  // roll 40 <= 40 %
-        Assert.Equal("c5320", Single(planner, "c2640_0000").Enemy!.Id);
     }
 
     [Fact]

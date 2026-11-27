@@ -60,6 +60,13 @@ public sealed class DialogService(IServiceProvider services) : IDialogService, I
         window.ShowDialog();
     }
 
+    public void ShowBackups()
+    {
+        var window = services.GetRequiredService<BackupsWindow>();
+        window.Owner = Owner;
+        window.ShowDialog();
+    }
+
     public void Post(Action action) =>
         Application.Current.Dispatcher.BeginInvoke(action, DispatcherPriority.Background);
 

@@ -27,6 +27,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IFirstTimeSetup, FirstTimeSetup>();
         services.AddSingleton<IInstallationStatus, InstallationStatus>();
         services.AddSingleton<GameRestorer>();
+        services.AddSingleton<IBackupService, BackupService>();
 
         services.AddSingleton<IEnemyConfigRepository, EnemyConfigRepository>();
         services.AddSingleton<IGameDataRepository, Data.GameDataRepository>();

@@ -246,30 +246,12 @@ public sealed partial class ReplacementPlanner
                     maxSize = size;
                 }
 
-                var npc = _options.NpcMode switch
-                {
-                    ReplaceMode.BossesOnly => Boss(FullyRandomMode, true, maxSize, difficulty, part, canBeNormal: false, replacingBoss: false),
-                    ReplaceMode.NormalsOnly => Normal(FullyRandomMode, true, maxSize, difficulty, part),
-                    _ => NormalOrBoss(FullyRandomMode, _options.BossChanceNormals, true, maxSize, difficulty, part, replacingBoss: false),
-                };
-                return Forced(rules) ?? npc;
+                // NPC-s are only exchanged with normal enemies (the setting offers no boss replacement).
+                return Normal(FullyRandomMode, true, maxSize, difficulty, part);
 
             default:
                 return Code(ReplacementOutcome.ModeOff);
         }
-    }
-
-    /// <summary>Andre may become Gwyndolin (creature rule with a forced enemy).</summary>
-    private int? Forced(IReadOnlyList<CreatureRule> rules)
-    {
-        var rule = rules.FirstOrDefault(r => r.ForcedEnemyId is not null);
-        if (rule is null || _random.Between(1, 100) > rule.ForcedChancePercent)
-        {
-            return null;
-        }
-
-        var enemy = _pool.Catalog.FirstOrDefault(e => e.Id == rule.ForcedEnemyId);
-        return enemy?.Index;
     }
 
     /// <summary>

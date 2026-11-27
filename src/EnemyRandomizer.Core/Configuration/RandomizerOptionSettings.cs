@@ -93,6 +93,9 @@ public sealed class OptionDefinition
     /// <summary>The option only has an effect when ANY of these conditions holds. Empty = always.</summary>
     public List<OptionCondition> EnabledWhen { get; set; } = [];
 
+    /// <summary>Short hint shown under the disabled option, e.g. "Needs boss mode 'With bosses or normal enemies'".</summary>
+    public string DisabledReason { get; set; } = "";
+
     /// <summary>The option is only shown when ANY of these conditions holds. Empty = always shown.</summary>
     public List<OptionCondition> VisibleWhen { get; set; } = [];
 
@@ -100,6 +103,15 @@ public sealed class OptionDefinition
     public string Presentation { get; set; } = "";
 
     public const string CardsPresentation = "Cards";
+
+    /// <summary>
+    /// Values of earlier versions that no longer exist, mapped to their replacement (saved settings and imported
+    /// text configs are migrated with it instead of being rejected).
+    /// </summary>
+    public Dictionary<int, int> ReplacedValues { get; set; } = [];
+
+    /// <summary>The replacement for a removed value, otherwise the value itself.</summary>
+    public int Migrate(int value) => ReplacedValues.TryGetValue(value, out var current) ? current : value;
 
     /// <summary>True when <paramref name="value"/> is allowed for this option.</summary>
     public bool IsValidValue(int value) =>
@@ -140,6 +152,15 @@ public sealed class OptionDefinition
         {
             errors.Add($"Option '{Key}' presentation '{Presentation}' is not supported (only '{CardsPresentation}' on choice options).");
         }
+
+        if (EnabledWhen.Count > 0 && string.IsNullOrWhiteSpace(DisabledReason))
+        {
+            errors.Add($"Option '{Key}' can be disabled (EnabledWhen) and needs a DisabledReason.");
+        }
+
+        errors.AddRange(ReplacedValues
+            .Where(r => IsValidValue(r.Key) || !IsValidValue(r.Value))
+            .Select(r => $"Option '{Key}' replaced value {r.Key} must be removed and map to an allowed value (got {r.Value})."));
 
         if (!IsValidValue(Default))
         {

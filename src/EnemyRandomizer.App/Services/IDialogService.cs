@@ -25,6 +25,8 @@ public interface IDialogService
     void ShowEnemyConfigEditor();
 
     void ShowAbout();
+
+    void ShowBackups();
 }
 
 /// <summary>Posts work to the UI thread (used to undo a selection after the binding finished).</summary>

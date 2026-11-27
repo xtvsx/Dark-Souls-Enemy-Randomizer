@@ -13,6 +13,11 @@ public sealed class ChoiceOptionViewModel : OptionViewModel
 
     public IReadOnlyList<ChoiceViewModel> Choices { get; }
 
+    /// <summary>Many choices go into a drop-down; a few fit in a row of radio buttons.</summary>
+    public bool UseDropdown => Choices.Count > MaxRadioChoices;
+
+    private const int MaxRadioChoices = 3;
+
     public override string Description =>
         Choices.FirstOrDefault(c => c.Value == Value)?.Description ?? "";
 

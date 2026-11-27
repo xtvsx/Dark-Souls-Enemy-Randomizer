@@ -7,6 +7,8 @@
     <RootNamespace>EnemyRandomizer.App</RootNamespace>
     <AssemblyName>EnemyRandomizer</AssemblyName>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Application.ThemeMode (Fluent) is still flagged experimental in WPF. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

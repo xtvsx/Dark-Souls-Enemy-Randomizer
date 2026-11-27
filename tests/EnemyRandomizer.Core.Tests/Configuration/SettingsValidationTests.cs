@@ -49,6 +49,7 @@ public class RandomizerOptionSettingsTests
             {
                 Key = "Chance", LegacyIndex = 1, Tab = "main", Kind = OptionKind.Slider, Title = "Chance", Default = 50, Min = 0, Max = 100,
                 EnabledWhen = [new OptionCondition { Option = "BossMode", Values = [1] }],
+                DisabledReason = "Needs boss mode 1.",
             },
         ],
     };
@@ -86,6 +87,14 @@ public class RandomizerOptionSettingsTests
         var settings = Valid();
         settings.Options[1].EnabledWhen[0].Option = "Missing";
         Assert.Contains(settings.Validate(), e => e.Contains("unknown option 'Missing'", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Option_that_can_be_disabled_needs_a_reason()
+    {
+        var settings = Valid();
+        settings.Options[1].DisabledReason = "";
+        Assert.Contains(settings.Validate(), e => e.Contains("DisabledReason", StringComparison.Ordinal));
     }
 
     [Fact]

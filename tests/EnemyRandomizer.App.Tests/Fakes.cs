@@ -46,6 +46,10 @@ internal sealed class FakeDialogs : IDialogService, IUiThread
     public void ShowEnemyConfigEditor() { }
     public void ShowAbout() { }
 
+    public void ShowBackups() => BackupsShown++;
+
+    public int BackupsShown { get; private set; }
+
     public void Post(Action action) => action();
 }
 

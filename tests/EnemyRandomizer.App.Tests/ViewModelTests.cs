@@ -123,15 +123,15 @@ public class MainViewModelTests
         Assert.EndsWith("[Current Mode: REMASTERED]", (await Started(FakeInstallationStatus.Ok(ExeState.Remastered))).Title, StringComparison.Ordinal);
 
     private static OptionViewModel Option(MainViewModel vm, string key) =>
-        vm.Tabs.SelectMany(t => t.Options).Single(o => o.Key == key);
+        vm.Sections.SelectMany(t => t.Options).Single(o => o.Key == key);
 
     [Fact]
     public async Task Starts_with_defaults_when_nothing_saved()
     {
         var vm = await Started();
 
-        Assert.Equal(3, vm.Tabs.Count);
-        Assert.Equal(24, vm.Tabs.Sum(t => t.Options.Count));
+        Assert.Equal(5, vm.Sections.Count);
+        Assert.Equal(24, vm.Sections.Sum(t => t.Options.Count));
         Assert.Equal(1, vm.Current["BossMode"]);
         Assert.Equal(3, vm.Current["DifficultyMode"]);
         Assert.Contains("PTDE", vm.EditionText, StringComparison.Ordinal);
@@ -153,11 +153,20 @@ public class MainViewModelTests
         Option(vm, "BossMode").Value = bossMode;
 
         Assert.Equal(enabled, Option(vm, "BossChanceBosses").IsEnabled);
-        Assert.Equal(enabled, !Option(vm, "BossChanceBosses").DisplayTitle.StartsWith("[No effect]", StringComparison.Ordinal));
+        Assert.DoesNotContain("[No effect]", Option(vm, "BossChanceBosses").Title, StringComparison.Ordinal);
+        Assert.Equal(!enabled, Option(vm, "BossChanceBosses").Caption == Option(vm, "BossChanceBosses").Definition.DisabledReason);
     }
 
-    private static readonly string[] RandomOnly = ["ReplaceChance", "DifficultyMode", "DiffStrictness", "TypeReplacement", "PreventSame"];
+    private static readonly string[] RandomOnly =
+    [
+        "ReplaceChance", "DifficultyMode", "DiffStrictness", "TypeReplacement", "PreventSame",
+        "BossChanceNormals", "BossChanceBosses", "NpcMode",
+    ];
+
     private static readonly string[] ShuffleOnly = ["ShuffleScope", "ShuffleAsylumEasy"];
+
+    private static IEnumerable<string> ShownKeys(MainViewModel vm) =>
+        vm.Sections.SelectMany(s => s.VisibleOptions).Select(o => o.Key);
 
     [Fact]
     public void Random_mode_hides_the_shuffle_options()
@@ -166,8 +175,7 @@ public class MainViewModelTests
 
         Assert.All(RandomOnly, key => Assert.True(Option(vm, key).IsVisible, key));
         Assert.All(ShuffleOnly, key => Assert.False(Option(vm, key).IsVisible, key));
-        Assert.Equal(["RandomizeMode"], vm.SelectedTab.CardOptions.Select(o => o.Key));
-        Assert.DoesNotContain(vm.SelectedTab.VisibleOptions, o => o.Key == "ShuffleScope");
+        Assert.DoesNotContain("ShuffleScope", ShownKeys(vm));
     }
 
     [Fact]
@@ -179,24 +187,52 @@ public class MainViewModelTests
 
         Assert.All(RandomOnly, key => Assert.False(Option(vm, key).IsVisible, key));
         Assert.All(ShuffleOnly, key => Assert.True(Option(vm, key).IsVisible, key));
-        Assert.All(RandomOnly, key => Assert.DoesNotContain(vm.SelectedTab.VisibleOptions, o => o.Key == key)); // main tab
-        Assert.All(ShuffleOnly, key => Assert.Contains(vm.SelectedTab.GridOptions, o => o.Key == key));
-        Assert.DoesNotContain(vm.SelectedTab.GridOptions, o => o.IsCard);
+        Assert.All(RandomOnly, key => Assert.DoesNotContain(key, ShownKeys(vm)));
+        Assert.All(ShuffleOnly, key => Assert.Contains(key, ShownKeys(vm)));
 
         Option(vm, "RandomizeMode").Value = 0;
-        Assert.All(RandomOnly.Where(k => k is not ("TypeReplacement" or "PreventSame")), // those two are on the other tab
-            key => Assert.Contains(vm.SelectedTab.GridOptions, o => o.Key == key));
+        Assert.All(RandomOnly, key => Assert.Contains(key, ShownKeys(vm)));
     }
 
     [Fact]
-    public void Boss_chance_for_normals_is_enabled_by_normal_or_npc_mode()
+    public void Shuffle_mode_hides_the_sections_that_have_nothing_left()
+    {
+        var vm = Create();
+        var difficulty = vm.Sections.Single(s => s.Title == "Difficulty");
+        var npcs = vm.Sections.Single(s => s.Title == "NPCs");
+
+        Option(vm, "RandomizeMode").Value = 1;
+
+        Assert.False(difficulty.HasVisibleOptions); // every option of it is random-only
+        Assert.True(npcs.HasVisibleOptions); // hostile NPCs stay
+    }
+
+    [Fact]
+    public void Disabled_option_explains_itself_instead_of_a_no_effect_label()
+    {
+        var vm = Create();
+        Option(vm, "DifficultyMode").Value = 2; // fully random: strictness is unused
+
+        var strictness = Option(vm, "DiffStrictness");
+
+        Assert.False(strictness.IsEnabled);
+        Assert.True(strictness.IsVisible);
+        Assert.NotEmpty(strictness.Definition.DisabledReason);
+        Assert.Equal(strictness.Definition.DisabledReason, strictness.Caption);
+
+        Option(vm, "DifficultyMode").Value = 1;
+        Assert.True(strictness.IsEnabled);
+        Assert.Equal(strictness.Description, strictness.Caption);
+    }
+
+    [Fact]
+    public void Boss_chance_for_normals_is_enabled_by_normal_mode()
     {
         var vm = Create();
         Option(vm, "NormalMode").Value = 2;
-        Option(vm, "NpcMode").Value = 0;
         Assert.False(Option(vm, "BossChanceNormals").IsEnabled);
 
-        Option(vm, "NpcMode").Value = 3;
+        Option(vm, "NormalMode").Value = 3;
         Assert.True(Option(vm, "BossChanceNormals").IsEnabled);
     }
 
@@ -376,56 +412,6 @@ public class MainViewModelTests
         var vm = Create();
         _configs.Save("Fresh", [true, false]);
         Assert.Contains("Fresh", vm.EnemyConfigNames);
-    }
-}
-
-public class OptionTabViewModelTests
-{
-    private static (OptionTabViewModel Tab, ChoiceOptionViewModel Boss, SliderOptionViewModel Chance) Create()
-    {
-        var options = ShippedConfig.Get<RandomizerOptionSettings>().Value;
-        var factory = new OptionViewModelFactory();
-        var boss = (ChoiceOptionViewModel)factory.Create(options.Find("BossMode")!);
-        var chance = (SliderOptionViewModel)factory.Create(options.Find("ReplaceChance")!);
-        return (new OptionTabViewModel("Main", [boss, chance]), boss, chance);
-    }
-
-    [Fact]
-    public void Hovering_other_value_previews_its_description()
-    {
-        var (_, boss, chance) = Create();
-        var other = boss.Choices.First(c => !c.IsSelected);
-
-        boss.Hover(other);
-
-        Assert.Equal(DescriptionState.Preview, boss.State);
-        Assert.Equal(DescriptionState.Faded, chance.State);
-        Assert.Equal(other.Description, boss.DisplayedDescription);
-    }
-
-    [Fact]
-    public void Selecting_the_previewed_value_turns_into_hovered()
-    {
-        var (_, boss, _) = Create();
-        var other = boss.Choices.First(c => !c.IsSelected);
-        boss.Hover(other);
-
-        other.IsSelected = true;
-
-        Assert.Equal(DescriptionState.Hovered, boss.State);
-        Assert.Single(boss.Choices, c => c.IsSelected);
-    }
-
-    [Fact]
-    public void Leaving_resets_all_states()
-    {
-        var (_, boss, chance) = Create();
-        chance.Hover();
-        chance.ClearHover();
-
-        Assert.Equal(DescriptionState.Normal, boss.State);
-        Assert.Equal(DescriptionState.Normal, chance.State);
-        Assert.Equal(boss.Description, boss.DisplayedDescription);
     }
 }
 

@@ -5,40 +5,68 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:EnemyRandomizer.App.ViewModels"
         xmlns:opt="clr-namespace:EnemyRandomizer.App.ViewModels.Options"
-        xmlns:b="clr-namespace:EnemyRandomizer.App.Behaviors"
         xmlns:svc="clr-namespace:EnemyRandomizer.App.Services"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Style="{StaticResource AppWindow}"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="1100" Height="820" MinWidth="960" MinHeight="640"
+        Width="900" Height="820" MinWidth="640" MinHeight="560"
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
-    <!-- Radio button group option -->
-    <DataTemplate DataType="{x:Type opt:ChoiceOptionViewModel}">
-      <GroupBox Header="{Binding DisplayTitle}" IsEnabled="{Binding IsEnabled}"
-                b:OptionHelp.TrackOption="True"
-                AutomationProperties.Name="{Binding Definition.Title}"
-                AutomationProperties.HelpText="{Binding Description}">
-        <ItemsControl ItemsSource="{Binding Choices}" IsTabStop="False">
+    <!-- Option layout: title, control, caption (why it is disabled, otherwise what the current value does).
+         Nothing has a fixed width and all text wraps, so nothing is clipped. -->
+    <DataTemplate x:Key="RadioOptionTemplate" DataType="{x:Type opt:ChoiceOptionViewModel}">
+      <Grid Margin="0,0,0,16" IsEnabled="{Binding IsEnabled}"
+            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Description}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,6" />
+
+        <!-- A few choices: radio buttons in a wrapping row -->
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding Choices}" IsTabStop="False">
+          <ItemsControl.Style>
+            <Style TargetType="ItemsControl">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding UseDropdown}" Value="True">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </ItemsControl.Style>
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type opt:ChoiceViewModel}">
               <RadioButton Content="{Binding Label}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                           b:OptionHelp.TrackChoice="True"
+                           Margin="0,0,20,4" ToolTip="{Binding Description}"
                            AutomationProperties.HelpText="{Binding Description}" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-      </GroupBox>
+
+        <!-- Many choices: drop-down -->
+        <ComboBox Grid.Row="1" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                  SelectedValue="{Binding Value, Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="260"
+                  AutomationProperties.Name="{Binding Title}"
+                  Visibility="{Binding UseDropdown, Converter={StaticResource BoolToVisibility}}" />
+
+        <TextBlock Grid.Row="2" Text="{Binding Caption}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
+                   Foreground="{DynamicResource MutedTextBrush}" />
+      </Grid>
     </DataTemplate>
 
     <!-- Option drawn as selectable cards (the randomize method): equal-width cards in one row -->
     <DataTemplate x:Key="CardOptionTemplate" DataType="{x:Type opt:ChoiceOptionViewModel}">
-      <ItemsControl ItemsSource="{Binding Choices}" IsTabStop="False" IsEnabled="{Binding IsEnabled}"
-                    b:OptionHelp.TrackOption="True"
-                    AutomationProperties.Name="{Binding Definition.Title}"
+      <ItemsControl ItemsSource="{Binding Choices}" IsTabStop="False" IsEnabled="{Binding IsEnabled}" Margin="0,0,0,16"
+                    AutomationProperties.Name="{Binding Title}"
                     AutomationProperties.HelpText="{Binding Description}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -48,11 +76,11 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type opt:ChoiceViewModel}">
             <RadioButton Style="{StaticResource CardRadioButton}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                         b:OptionHelp.TrackChoice="True"
+                         ToolTip="{Binding Description}"
                          AutomationProperties.Name="{Binding Label}"
                          AutomationProperties.HelpText="{Binding Description}">
               <StackPanel>
-                <TextBlock Text="{Binding Label}" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Label}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,2,0,0"
                            Foreground="{DynamicResource MutedTextBrush}" />
               </StackPanel>
@@ -62,51 +90,55 @@
       </ItemsControl>
     </DataTemplate>
 
-    <!-- Percentage slider option -->
-    <DataTemplate DataType="{x:Type opt:SliderOptionViewModel}">
-      <GroupBox Header="{Binding DisplayTitle}" IsEnabled="{Binding IsEnabled}"
-                b:OptionHelp.TrackOption="True">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="40" />
-          </Grid.ColumnDefinitions>
-          <Slider Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Value="{Binding Value, Mode=TwoWay}"
-                  IsSnapToTickEnabled="True" TickFrequency="1" SmallChange="1" LargeChange="10"
-                  VerticalAlignment="Center"
-                  AutomationProperties.Name="{Binding Definition.Title}"
-                  AutomationProperties.HelpText="{Binding Description}" />
-          <TextBlock Grid.Column="1" Text="{Binding Value, StringFormat={}{0}%}" TextAlignment="Right"
-                     VerticalAlignment="Center" FontWeight="SemiBold" />
-        </Grid>
-      </GroupBox>
+    <!-- Choice option: cards or radio/drop-down depending on its presentation -->
+    <DataTemplate DataType="{x:Type opt:ChoiceOptionViewModel}">
+      <ContentControl Content="{Binding}" ContentTemplate="{StaticResource RadioOptionTemplate}" IsTabStop="False">
+        <ContentControl.Style>
+          <Style TargetType="ContentControl">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsCard}" Value="True">
+                <Setter Property="ContentTemplate" Value="{StaticResource CardOptionTemplate}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ContentControl.Style>
+      </ContentControl>
     </DataTemplate>
 
-    <!-- One entry of the description panel -->
-    <DataTemplate x:Key="DescriptionTemplate" DataType="{x:Type opt:OptionViewModel}">
-      <Border x:Name="Card" Padding="10,8" Margin="0,0,0,6" CornerRadius="4" Background="Transparent">
+    <!-- Percentage slider option -->
+    <DataTemplate DataType="{x:Type opt:SliderOptionViewModel}">
+      <Grid Margin="0,0,0,16" IsEnabled="{Binding IsEnabled}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,6" />
+        <TextBlock Grid.Column="1" Text="{Binding Value, StringFormat={}{0}%}" FontWeight="SemiBold"
+                   Margin="12,0,0,0" TextAlignment="Right" MinWidth="40" />
+        <Slider Grid.Row="1" Grid.ColumnSpan="2" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}"
+                Value="{Binding Value, Mode=TwoWay}" IsSnapToTickEnabled="True" TickFrequency="1" SmallChange="1" LargeChange="10"
+                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Description}" />
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Caption}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
+                   Foreground="{DynamicResource MutedTextBrush}" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- One category: heading and its shown options; the whole section disappears when the mode hides all of them -->
+    <DataTemplate DataType="{x:Type opt:OptionSectionViewModel}">
+      <Border Padding="16,14,16,0" Margin="0,0,0,12" CornerRadius="6" Background="{DynamicResource PanelBrush}"
+              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+              Visibility="{Binding HasVisibleOptions, Converter={StaticResource BoolToVisibility}}">
         <StackPanel>
-          <TextBlock x:Name="Heading" Text="{Binding Definition.Title}" FontSize="11" FontWeight="SemiBold"
-                     Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,2" />
-          <TextBlock x:Name="Body" Text="{Binding DisplayedDescription}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"
+                     AutomationProperties.HeadingLevel="Level2" />
+          <ItemsControl ItemsSource="{Binding VisibleOptions}" IsTabStop="False" />
         </StackPanel>
       </Border>
-      <DataTemplate.Triggers>
-        <DataTrigger Binding="{Binding State}" Value="Faded">
-          <Setter TargetName="Body" Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding State}" Value="Hovered">
-          <Setter TargetName="Card" Property="Background" Value="{DynamicResource HighlightBrush}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding State}" Value="Preview">
-          <Setter TargetName="Card" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
-          <Setter TargetName="Body" Property="Foreground" Value="{DynamicResource AccentBrush}" />
-          <Setter TargetName="Heading" Property="Foreground" Value="{DynamicResource AccentBrush}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
-          <Setter TargetName="Card" Property="Opacity" Value="0.55" />
-        </DataTrigger>
-      </DataTemplate.Triggers>
     </DataTemplate>
   </Window.Resources>
 
@@ -133,14 +165,9 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="190" />
-      <ColumnDefinition Width="*" MinWidth="320" />
-      <ColumnDefinition Width="*" MinWidth="260" MaxWidth="380" />
-    </Grid.ColumnDefinitions>
 
     <!-- Top bar: seed + overflow menu -->
-    <DockPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,10" LastChildFill="True">
+    <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="True">
       <Menu DockPanel.Dock="Right" Background="Transparent" VerticalAlignment="Center">
         <MenuItem AutomationProperties.Name="Menu" ToolTip="Menu (F10)" Padding="10,6">
           <MenuItem.Header>
@@ -150,6 +177,7 @@
           <MenuItem Header="Copy enemy _placement..." Command="{Binding CopyPlacementCommand}" />
           <MenuItem Header="About copy _info" Command="{Binding ShowCopyInfoCommand}" />
           <Separator />
+          <MenuItem Header="_Backups..." Command="{Binding ShowBackupsCommand}" />
           <MenuItem Header="Restore _default settings" Command="{Binding RestoreDefaultsCommand}" />
           <MenuItem Header="Change game _folder..." Command="{Binding ChooseGameFolderCommand}" />
           <MenuItem Header="_Theme">
@@ -167,53 +195,14 @@
                VerticalContentAlignment="Center" MaxWidth="360" HorizontalAlignment="Left" MinWidth="220" />
     </DockPanel>
 
-    <!-- Categories + enemy config -->
-    <DockPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0" LastChildFill="True">
-      <GroupBox DockPanel.Dock="Bottom" Header="Enemy config" Margin="0,8,0,0">
-        <StackPanel>
-          <ComboBox AutomationProperties.Name="Enemy config" ItemsSource="{Binding EnemyConfigNames}"
-                    SelectedItem="{Binding SelectedEnemyConfig}" Margin="0,0,0,6" />
-          <Button Content="Open _editor" Command="{Binding OpenEnemyConfigEditorCommand}" Margin="0" />
-        </StackPanel>
-      </GroupBox>
-      <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-               AutomationProperties.Name="Option categories">
-        <ListBox.ItemTemplate>
-          <DataTemplate DataType="{x:Type opt:OptionTabViewModel}">
-            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-    </DockPanel>
+    <!-- All options on one page, grouped by category -->
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel MaxWidth="780" HorizontalAlignment="Stretch" Margin="0,0,12,0">
 
-    <!-- Options of the selected category -->
-    <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
-      <StackPanel>
-        <ItemsControl ItemsSource="{Binding SelectedTab.CardOptions}" ItemTemplate="{StaticResource CardOptionTemplate}"
-                      IsTabStop="False" Margin="0,0,8,12" />
-        <ItemsControl ItemsSource="{Binding SelectedTab.GridOptions}" IsTabStop="False">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <WrapPanel ItemWidth="290" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-        </ItemsControl>
-      </StackPanel>
-    </ScrollViewer>
-
-    <!-- Detail pane -->
-    <Border Grid.Row="1" Grid.Column="2" Margin="4,0,0,0" Background="{DynamicResource PanelBrush}"
-            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
-      <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6"
-                      Visibility="{Binding HasStartupErrors, Converter={StaticResource InverseBoolToVisibility}}">
-          <ItemsControl ItemsSource="{Binding SelectedTab.VisibleOptions}" ItemTemplate="{StaticResource DescriptionTemplate}"
-                        IsTabStop="False" />
-        </ScrollViewer>
-
-        <!-- Startup problems replace the descriptions (legacy message area in red) -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14"
-                      Visibility="{Binding HasStartupErrors, Converter={StaticResource BoolToVisibility}}">
+        <!-- Startup problems come first: nothing below works until they are fixed -->
+        <Border Padding="16" Margin="0,0,0,12" CornerRadius="6" BorderThickness="1"
+                Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource ErrorBrush}"
+                Visibility="{Binding HasStartupErrors, Converter={StaticResource BoolToVisibility}}">
           <StackPanel>
             <TextBlock Text="{Binding StartupErrorsHeader}" TextWrapping="Wrap" FontWeight="SemiBold"
                        Foreground="{DynamicResource ErrorBrush}" Margin="0,0,0,12" />
@@ -232,12 +221,28 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </StackPanel>
-        </ScrollViewer>
-      </Grid>
-    </Border>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Sections}" IsTabStop="False" />
+
+        <!-- Enemy config -->
+        <Border Padding="16,14,16,16" Margin="0,0,0,12" CornerRadius="6" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+          <StackPanel>
+            <TextBlock Text="Enemy config" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"
+                       AutomationProperties.HeadingLevel="Level2" />
+            <DockPanel LastChildFill="True">
+              <Button DockPanel.Dock="Right" Content="Open _editor" Command="{Binding OpenEnemyConfigEditorCommand}" Margin="8,0,0,0" />
+              <ComboBox AutomationProperties.Name="Enemy config" ItemsSource="{Binding EnemyConfigNames}"
+                        SelectedItem="{Binding SelectedEnemyConfig}" />
+            </DockPanel>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
 
     <!-- Result banner -->
-    <Border Grid.Row="2" Grid.ColumnSpan="3" Margin="0,10,0,0" Padding="12,8" CornerRadius="4" BorderThickness="1"
+    <Border Grid.Row="2" Margin="0,10,0,0" Padding="12,8" CornerRadius="4" BorderThickness="1"
             Visibility="{Binding Notice, Converter={StaticResource NullToCollapsed}}"
             AutomationProperties.LiveSetting="Assertive">
       <Border.Style>
@@ -264,13 +269,15 @@
     </Border>
 
     <!-- Sticky action bar -->
-    <Border Grid.Row="3" Grid.ColumnSpan="3" Margin="0,10,0,0" Padding="0,10,0,0"
+    <Border Grid.Row="3" Margin="0,10,0,0" Padding="0,10,0,0"
             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
       <DockPanel LastChildFill="True">
         <Button DockPanel.Dock="Right" Content="_Randomize" Command="{Binding RandomizeCommand}"
                 Style="{StaticResource PrimaryButton}" IsDefault="True" ToolTip="Randomize (Ctrl+R)"
                 Margin="8,0,0,0" MinWidth="130" />
         <Button DockPanel.Dock="Right" Content="Re_vert to normal" Command="{Binding RevertCommand}" Margin="8,0,0,0" />
+        <Button DockPanel.Dock="Right" Content="_Backups..." Command="{Binding ShowBackupsCommand}" Margin="8,0,0,0"
+                ToolTip="Check, verify and restore the backups of the game files" />
         <TextBlock Text="{Binding EditionText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    Foreground="{DynamicResource MutedTextBrush}" />
       </DockPanel>

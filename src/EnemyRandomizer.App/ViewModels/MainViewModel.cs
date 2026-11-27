@@ -80,10 +80,9 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
             };
         }
 
-        Tabs = _options.Tabs
-            .Select(t => new OptionTabViewModel(t.Title, _allOptions.Where(o => o.Definition.Tab == t.Id).ToList()))
+        Sections = _options.Tabs
+            .Select(t => new OptionSectionViewModel(t.Title, _allOptions.Where(o => o.Definition.Tab == t.Id).ToList()))
             .ToList();
-        SelectedTab = Tabs[0];
         UpdateOptionStates();
 
         _installation = installation;
@@ -179,12 +178,10 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
         }
     }
 
-    public IReadOnlyList<OptionTabViewModel> Tabs { get; }
+    /// <summary>The option categories, shown one below the other on a single page.</summary>
+    public IReadOnlyList<OptionSectionViewModel> Sections { get; }
 
     public ObservableCollection<string> EnemyConfigNames { get; } = [];
-
-    [ObservableProperty]
-    public partial OptionTabViewModel SelectedTab { get; set; }
 
     [ObservableProperty]
     public partial string Seed { get; set; } = "";
@@ -262,6 +259,9 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
 
         await RunAsync(_messages.Get(MessageKeys.CopyingTitle), (p, ct) => _randomizer.CopyPlacementAsync(file, p, ct), allowCancel: true).ConfigureAwait(true);
     }
+
+    [RelayCommand]
+    private void ShowBackups() => _dialogs.ShowBackups();
 
     [RelayCommand]
     private void ShowCopyInfo() =>
@@ -420,9 +420,9 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
             option.UpdateVisible(ValueOf);
         }
 
-        foreach (var tab in Tabs)
+        foreach (var section in Sections)
         {
-            tab.RefreshVisibility();
+            section.RefreshVisibility();
         }
     }
 

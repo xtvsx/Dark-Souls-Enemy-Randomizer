@@ -145,7 +145,7 @@ public sealed class ShippedConfigurationTests : IDisposable
 
         Assert.Empty(rules.CreatureRules.SelectMany(r => r.Validate(options)));
         Assert.All(rules.CreatureRules.Where(r => r.ForcedEnemyId is not null), r => Assert.Contains(r.ForcedEnemyId!, catalogIds));
-        Assert.Equal(27, rules.CreatureRules.Count);
+        Assert.Equal(26, rules.CreatureRules.Count);
     }
 
     [Fact]

@@ -15,11 +15,25 @@ Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
   enemies keep their place. "Shuffle scope" shuffles per area or across the whole game; "Easy asylum (shuffle)" limits the
   Northern Undead Asylum to the easy enemy and boss lists. Config strings of v0.4.x still parse (new options use defaults).
 
+- **Backup manager** ("Backups..." button and menu entry): lists every game file that has a `.bak` backup, whether the
+  game file is currently randomized, and whether the backup is usable (broken, too small backups are flagged and never
+  restored). "Verify" checks again; "Restore selected" puts chosen files back without a full "Revert to normal".
+
+### Changed
+- **New settings window**: all options are on one scrolling page, grouped into Replacement, Difficulty, Bosses,
+  Special enemies and NPCs. Text wraps, so nothing is cut off. Options that have no effect in the current setting are
+  greyed out with a short reason instead of a "[No effect]" label; options that never apply in the chosen randomize
+  method are hidden. Controls use the built-in Windows Fluent theme.
+- "Replace NPC-s" only offers "Do not replace" and "With normal enemies"; the boss-chance sliders are hidden in Shuffle mode.
+
 ### Fixed
 - Choosing a game folder no longer makes startup fail with missing data files: `enemyRandomizerData` is now always
   read from the exe folder instead of the chosen game folder.
 
 ### Removed
+- Replacing NPC-s with bosses (rarely useful, it could make NPC-s unreachable) and the Andre-to-Gwyndolin rule.
+  Saved settings and imported config strings with the old values are converted automatically (only bosses -> off,
+  bosses or normals -> normals).
 - Legacy Python build artifacts from `dist/` (`randomizer.exe`, `EnemyRandomizerv0412.zip`, `Enemy Randomizer ReadMe.txt`).
   `dist/enemyRandomizerData` stays: it is the shipped runtime data and is used by the app publish and the test projects.
 

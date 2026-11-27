@@ -64,13 +64,13 @@ public static class LegacyConfigString
 
             var part = parts[option.LegacyIndex];
             if (!int.TryParse(part, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
-                || !option.IsValidValue(value))
+                || !option.IsValidValue(option.Migrate(value)))
             {
                 error = $"'{part}' is not a valid value for '{option.Title.TrimEnd(':')}'.";
                 return false;
             }
 
-            values[option.Key] = value;
+            values[option.Key] = option.Migrate(value);
         }
 
         var seed = parts[^1].Replace(SeedQuote, "", StringComparison.Ordinal);
