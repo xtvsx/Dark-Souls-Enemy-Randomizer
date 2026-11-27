@@ -1,5 +1,6 @@
 using EnemyRandomizer.App.ViewModels;
 using EnemyRandomizer.Core.Abstractions;
+using EnemyRandomizer.Core.Configuration;
 
 namespace EnemyRandomizer.App.Tests;
 
@@ -7,94 +8,168 @@ public class BackupsViewModelTests
 {
     private sealed class FakeBackups : IBackupService
     {
-        public List<BackupEntry> Entries { get; } = [];
+        public string BackupDirectory => "C:/game/data/backups";
 
-        public List<BackupEntry> Restored { get; } = [];
+        public List<BackupSet> Sets { get; } = [];
 
-        public BackupReport Check() => new([.. Entries], 3);
+        public GameFilesState State { get; set; } = GameFilesState.Randomized;
 
-        public int Restore(IEnumerable<BackupEntry> entries)
+        public List<(string Id, bool Effects)> Restored { get; } = [];
+
+        public List<string> Deleted { get; } = [];
+
+        public BackupReport Check() => new([.. Sets], State, BackupDirectory);
+
+        public int Restore(string id, bool restoreEffects)
         {
-            Restored.AddRange(entries);
-            foreach (var entry in Restored)
-            {
-                Entries[Entries.FindIndex(e => e.GamePath == entry.GamePath)] = entry with { GameFileChanged = false };
-            }
+            Restored.Add((id, restoreEffects));
+            return 7;
+        }
 
-            return Restored.Count;
+        public bool Delete(string id)
+        {
+            Deleted.Add(id);
+            return Sets.RemoveAll(s => s.Id == id) > 0;
         }
     }
 
     private readonly FakeBackups _backups = new();
     private readonly FakeDialogs _dialogs = new();
+    private readonly FakeShell _shell = new();
 
-    private static BackupEntry Entry(string name, bool changed = true, BackupState state = BackupState.Intact) =>
-        new("Maps", name, @"C:\game\" + name, state, changed, DateTime.Now);
+    private static BackupSet Initial(bool current = false, bool broken = false) =>
+        new("initial", BackupKind.Initial, new DateTime(2026, 11, 1, 10, 0, 0), 53, 70_000_000, current, broken);
 
-    private BackupsViewModel Create() => new(_backups, _dialogs);
+    private static BackupSet Snapshot(string id = "2026-11-27_17-40-12", bool current = false) =>
+        new(id, BackupKind.Snapshot, new DateTime(2026, 11, 27, 17, 40, 12), 40, 30_000_000, current, false);
+
+    private async Task<BackupsViewModel> Loaded()
+    {
+        var vm = new BackupsViewModel(_backups, _dialogs, _shell, ShippedConfig.Get<MessageSettings>());
+        await vm.RefreshCommand.ExecuteAsync(null);
+        return vm;
+    }
 
     [Fact]
-    public void Empty_report_explains_that_backups_appear_after_the_first_run()
+    public async Task Without_any_backup_it_explains_when_the_first_one_is_made()
     {
-        var vm = Create();
+        var vm = await Loaded();
 
         Assert.Empty(vm.Items);
-        Assert.Contains("No backups yet", vm.Summary, StringComparison.Ordinal);
-        Assert.Equal("", vm.Warning);
+        Assert.Contains("first time", vm.Summary, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Summary_counts_backups_and_randomized_files_and_warns_about_broken_ones()
+    public async Task The_first_backup_is_titled_initial_game_state_and_marked_as_original()
     {
-        _backups.Entries.AddRange([Entry("a"), Entry("b", changed: false), Entry("c", state: BackupState.Broken)]);
+        _backups.Sets.AddRange([Initial(), Snapshot()]);
 
-        var vm = Create();
+        var vm = await Loaded();
 
-        Assert.Equal(3, vm.Items.Count);
-        Assert.Contains("3 backups, 2 of the game files", vm.Summary, StringComparison.Ordinal);
-        Assert.Contains("1 backups are broken", vm.Warning, StringComparison.Ordinal);
+        Assert.Equal(["Initial game state", "Before randomization"], vm.Items.Select(i => i.Title));
+        Assert.Equal("Original game", vm.Items[0].Badge);
+        Assert.False(vm.Items[0].CanDelete);
+        Assert.True(vm.Items[1].CanDelete);
+        Assert.Contains("2 backups", vm.Summary, StringComparison.Ordinal);
+        Assert.Contains("randomized", vm.Summary, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Select_randomized_picks_only_restorable_changed_files()
+    public async Task The_current_state_is_marked()
     {
-        _backups.Entries.AddRange([Entry("a"), Entry("b", changed: false), Entry("c", state: BackupState.Broken)]);
-        var vm = Create();
+        _backups.State = GameFilesState.Original;
+        _backups.Sets.Add(Initial(current: true));
 
-        vm.SelectChangedCommand.Execute(null);
+        var vm = await Loaded();
 
-        Assert.Equal(["a"], vm.Items.Where(i => i.IsSelected).Select(i => i.Name));
+        Assert.Equal("Original game · current state", vm.Items[0].Badge);
+        Assert.Contains("the original game", vm.Summary, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Restore_needs_a_selection_and_a_confirmation()
+    public async Task The_list_never_shows_files_or_categories()
     {
-        _backups.Entries.Add(Entry("a"));
-        var vm = Create();
-        Assert.False(vm.RestoreSelectedCommand.CanExecute(null));
+        _backups.Sets.AddRange([Initial(), Snapshot()]);
 
-        vm.Items[0].IsSelected = true;
-        Assert.True(vm.RestoreSelectedCommand.CanExecute(null));
+        var vm = await Loaded();
 
+        var shown = string.Join(" ", vm.Items.SelectMany(i => new[] { i.Title, i.Details, i.Badge }));
+        Assert.DoesNotContain("map", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AI", shown, StringComparison.Ordinal);
+        Assert.DoesNotContain(".msb", shown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Restoring_the_initial_state_asks_about_effect_files_like_revert()
+    {
+        _backups.Sets.Add(Initial());
+        var vm = await Loaded();
+        _dialogs.ConfirmOrCancelAnswer = false; // "No": keep the merged effect files
+
+        await vm.RestoreCommand.ExecuteAsync(vm.Items[0]);
+
+        Assert.Equal([("initial", false)], _backups.Restored);
+        Assert.Contains("7 game files restored", _dialogs.Infos.Single(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Cancelling_the_question_restores_nothing()
+    {
+        _backups.Sets.Add(Initial());
+        var vm = await Loaded();
+        _dialogs.ConfirmOrCancelAnswer = null;
+
+        await vm.RestoreCommand.ExecuteAsync(vm.Items[0]);
+
+        Assert.Empty(_backups.Restored);
+    }
+
+    [Fact]
+    public async Task Restoring_a_snapshot_needs_a_confirmation_and_never_touches_effect_files()
+    {
+        _backups.Sets.AddRange([Initial(), Snapshot()]);
+        var vm = await Loaded();
         _dialogs.ConfirmAnswer = false;
-        vm.RestoreSelectedCommand.Execute(null);
+
+        await vm.RestoreCommand.ExecuteAsync(vm.Items[1]);
         Assert.Empty(_backups.Restored);
 
         _dialogs.ConfirmAnswer = true;
-        vm.RestoreSelectedCommand.Execute(null);
-        Assert.Single(_backups.Restored);
-        Assert.Contains("1 files restored", _dialogs.Infos.Single(), StringComparison.Ordinal);
-        Assert.Equal("Original", vm.Items.Single().Status); // list was checked again
+        await vm.RestoreCommand.ExecuteAsync(vm.Items[1]);
+        Assert.Equal([("2026-11-27_17-40-12", false)], _backups.Restored);
     }
 
     [Fact]
-    public void Broken_backup_cannot_be_selected_for_restore()
+    public async Task Deleting_a_snapshot_removes_it_from_the_list_but_the_initial_state_cannot_be_deleted()
     {
-        _backups.Entries.Add(Entry("a", state: BackupState.Broken));
-        var vm = Create();
+        _backups.Sets.AddRange([Initial(), Snapshot()]);
+        var vm = await Loaded();
 
-        vm.Items[0].IsSelected = true;
+        await vm.DeleteCommand.ExecuteAsync(vm.Items[0]);
+        Assert.Empty(_backups.Deleted);
 
-        Assert.False(vm.RestoreSelectedCommand.CanExecute(null));
+        await vm.DeleteCommand.ExecuteAsync(vm.Items[1]);
+        Assert.Equal(["2026-11-27_17-40-12"], _backups.Deleted);
+        Assert.Equal(["Initial game state"], vm.Items.Select(i => i.Title));
+    }
+
+    [Fact]
+    public async Task A_damaged_backup_is_reported()
+    {
+        _backups.Sets.Add(Initial(broken: true));
+
+        var vm = await Loaded();
+
+        Assert.Contains("damaged", vm.Warning, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Open_folder_opens_the_backup_directory()
+    {
+        var vm = await Loaded();
+
+        vm.OpenFolderCommand.Execute(null);
+
+        Assert.Contains("C:/game/data/backups", _shell.Opened);
     }
 }

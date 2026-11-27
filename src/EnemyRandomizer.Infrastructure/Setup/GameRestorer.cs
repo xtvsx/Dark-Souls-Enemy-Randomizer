@@ -12,12 +12,13 @@ public sealed record RevertResult(int FilesRestored, bool ExeRestored, bool Para
 
 /// <summary>
 /// "Revert to normal" (legacy <c>revertToNormal</c> + <c>revertParam</c>, <c>randomizer_rng.py:993-1121</c>):
-/// maps, events and AI scripts come back from their <c>.bak</c> files; effect files and the exe only on request;
+/// maps, events and AI scripts come back from their backups; effect files and the exe only on request;
 /// NpcParam is taken from the GameParam copy made by the first-time setup.
 /// </summary>
 public sealed partial class GameRestorer(
     IGamePaths paths,
     GameFileLayout layout,
+    GameBackups backups,
     IExePatcher exePatcher,
     IOptions<GameDataSettings> gameData,
     ILogger<GameRestorer> logger)
@@ -74,7 +75,7 @@ public sealed partial class GameRestorer(
         return true;
     }
 
-    private int Restore(string relativePath) => BackupFiles.Restore(paths.InGame(relativePath)) ? 1 : 0;
+    private int Restore(string relativePath) => backups.Restore(paths.InGame(relativePath)) ? 1 : 0;
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Reverted: {Files} files, exe {Exe}, NpcParam {Param}")]
     private static partial void LogReverted(ILogger logger, int files, bool exe, bool param);

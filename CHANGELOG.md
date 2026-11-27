@@ -18,9 +18,13 @@ Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
 - **Randomizer modules**: the window has a sidebar with one page per randomizer, each with an on/off switch (remembered
   between runs). The Enemy Randomizer is the first; the Item Randomizer is listed as "Coming soon". Randomize needs at
   least one module switched on.
-- **Backup manager** ("Backups..." button and menu entry): lists every game file that has a `.bak` backup, whether the
-  game file is currently randomized, and whether the backup is usable (broken, too small backups are flagged and never
-  restored). "Verify" checks again; "Restore selected" puts chosen files back without a full "Revert to normal".
+- **Backup folder and backup manager** ("Backups..." in the sidebar and the menu, "Open backup folder" in the menu): the originals of
+  the game files now live in `enemyRandomizerData/backups/initial` instead of `.bak` files scattered in the game folder, and
+  existing `.bak` files are moved there automatically (the `.bak` is only removed after the copy is verified). The first
+  backup is marked "Initial game state / Original game". Before every further randomization the result of the previous one is kept as
+  a "Before randomization" snapshot (the newest 5 are kept, `App.MaxBackupSnapshots`). The Backups window shows one list of restore
+  points, with Restore and Delete (snapshots only), Verify and Open backup folder, and no per-file details. Restoring the initial state is
+  "Revert to normal".
 
 ### Changed
 - **New settings window**: all options are on one scrolling page, grouped into Replacement, Difficulty, Bosses,
@@ -30,6 +34,9 @@ Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
 - "Replace NPC-s" only offers "Do not replace" and "With normal enemies"; the boss-chance sliders are hidden in Shuffle mode.
 
 ### Fixed
+- A damaged backup (smaller than 10 bytes) is never copied over a game file; before, "Revert to normal" would have used it.
+- Dark mode works again (and switching between light, dark and "Follow Windows" while the app runs), text no longer disappears
+  on dark surfaces, and every message uses the same themed dialog window.
 - Choosing a game folder no longer makes startup fail with missing data files: `enemyRandomizerData` is now always
   read from the exe folder instead of the chosen game folder.
 

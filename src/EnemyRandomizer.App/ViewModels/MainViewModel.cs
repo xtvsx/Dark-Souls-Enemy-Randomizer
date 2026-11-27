@@ -295,6 +295,12 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
     private void ShowBackups() => _dialogs.ShowBackups();
 
     [RelayCommand]
+    private void OpenBackupFolder()
+    {
+        _shell.OpenFolder(_paths.BackupDirectory);
+    }
+
+    [RelayCommand]
     private void ShowCopyInfo() =>
         _dialogs.ShowInfo(_messages.Get(MessageKeys.CopyInfoTitle), _messages.Get(MessageKeys.CopyInfoText));
 

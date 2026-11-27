@@ -1,46 +1,53 @@
 namespace EnemyRandomizer.Core.Abstractions;
 
-/// <summary>Condition of one backed-up game file.</summary>
-public enum BackupState
+/// <summary>What a backup set is.</summary>
+public enum BackupKind
 {
-    /// <summary>The backup exists and can be restored.</summary>
-    Intact,
+    /// <summary>The game as it was before the randomizer touched it. Made once, never removed.</summary>
+    Initial,
 
-    /// <summary>The backup exists but is too small to be a real copy (interrupted copy); restoring it would break the game.</summary>
-    Broken,
+    /// <summary>The game files as they were right before one randomization (what the previous randomization left behind).</summary>
+    Snapshot,
 }
 
-/// <summary>One game file that has a <c>.bak</c> copy.</summary>
-/// <param name="Group">Kind of file for grouping in the UI (maps, events, AI scripts, effects).</param>
-/// <param name="Name">Short name, e.g. the map or effect file name.</param>
-/// <param name="GamePath">Absolute path of the game file the backup belongs to.</param>
-/// <param name="State">Whether the backup is usable.</param>
-/// <param name="GameFileChanged">True when the game file currently differs from its backup (randomized).</param>
-/// <param name="BackupModified">When the backup was made.</param>
-public sealed record BackupEntry(
-    string Group,
-    string Name,
-    string GamePath,
-    BackupState State,
-    bool GameFileChanged,
-    DateTime BackupModified);
-
-/// <summary>Overview of every backup the randomizer made in the game folder.</summary>
-/// <param name="Entries">Files that have a backup.</param>
-/// <param name="FilesWithoutBackup">Candidate game files without a backup (never changed by the randomizer).</param>
-public sealed record BackupReport(IReadOnlyList<BackupEntry> Entries, int FilesWithoutBackup)
+/// <summary>Whether the game files differ from the original game.</summary>
+public enum GameFilesState
 {
-    public int BrokenCount => Entries.Count(e => e.State == BackupState.Broken);
+    /// <summary>Every file the randomizer changes is as in the original game.</summary>
+    Original,
 
-    public int ChangedCount => Entries.Count(e => e.GameFileChanged);
+    /// <summary>At least one file differs from the original game.</summary>
+    Randomized,
 }
 
-/// <summary>Lists and restores the <c>.bak</c> files next to the game files.</summary>
+/// <summary>One restore point.</summary>
+/// <param name="Id">Folder name inside the backup directory (<c>initial</c> or a timestamp).</param>
+/// <param name="Kind">Initial state or snapshot.</param>
+/// <param name="Created">When the backup was made.</param>
+/// <param name="FileCount">Number of backed-up files.</param>
+/// <param name="Bytes">Total size of the backed-up files.</param>
+/// <param name="IsCurrent">The game files are right now as in this backup.</param>
+/// <param name="IsBroken">At least one backed-up file is too small to be a real copy (interrupted copy).</param>
+public sealed record BackupSet(string Id, BackupKind Kind, DateTime Created, int FileCount, long Bytes, bool IsCurrent, bool IsBroken);
+
+/// <summary>Overview of the backups; the first set is the initial state when it exists, snapshots follow newest first.</summary>
+public sealed record BackupReport(IReadOnlyList<BackupSet> Sets, GameFilesState GameState, string Directory);
+
+/// <summary>Lists, restores and deletes the backups the randomizer keeps in its backup directory.</summary>
 public interface IBackupService
 {
-    /// <summary>Checks every game file the randomizer can change. Returns an empty report when no game was found.</summary>
+    /// <summary>The backup directory (it may not exist before the first randomization).</summary>
+    string BackupDirectory { get; }
+
+    /// <summary>Looks at every backup and at the game files. Slow with many files, call it off the UI thread.</summary>
     BackupReport Check();
 
-    /// <summary>Copies the backups of <paramref name="entries"/> over the game files. Broken backups are skipped. Returns the number of files restored.</summary>
-    int Restore(IEnumerable<BackupEntry> entries);
+    /// <summary>
+    /// Puts a backup set back into the game. The initial set is a full "Revert to normal" (<paramref name="restoreEffects"/>
+    /// decides whether effect files and the exe are restored too); a snapshot copies its files back. Returns the number of files restored.
+    /// </summary>
+    int Restore(string id, bool restoreEffects);
+
+    /// <summary>Deletes a snapshot. The initial set cannot be deleted; returns false for it and for unknown ids.</summary>
+    bool Delete(string id);
 }

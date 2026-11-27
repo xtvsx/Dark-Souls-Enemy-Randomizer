@@ -4,7 +4,7 @@ namespace EnemyRandomizer.Infrastructure.Game;
 /// Remembers the content of files before they are changed so a failed or cancelled run can put the game back into the
 /// state it had before the run. Every file is captured once, on its first change.
 /// </summary>
-public sealed class FileTransaction
+public sealed class FileTransaction(GameBackups backups)
 {
     private readonly Dictionary<string, byte[]?> _snapshots = new(StringComparer.OrdinalIgnoreCase);
 
@@ -17,11 +17,11 @@ public sealed class FileTransaction
         }
     }
 
-    /// <summary>Tracked version of <see cref="BackupFiles.WriteWithBackup"/>.</summary>
+    /// <summary>Tracked version of <see cref="GameBackups.WriteWithBackup"/>.</summary>
     public void WriteWithBackup(string file, byte[] data)
     {
         Track(file);
-        BackupFiles.WriteWithBackup(file, data);
+        backups.WriteWithBackup(file, data);
     }
 
     /// <summary>Tracked atomic write.</summary>
@@ -31,11 +31,11 @@ public sealed class FileTransaction
         AtomicFile.WriteAllBytes(file, data);
     }
 
-    /// <summary>Tracked version of <see cref="BackupFiles.Restore"/>.</summary>
+    /// <summary>Tracked version of <see cref="GameBackups.Restore"/>.</summary>
     public bool Restore(string file)
     {
         Track(file);
-        return BackupFiles.Restore(file);
+        return backups.Restore(file);
     }
 
     /// <summary>Tracked copy over <paramref name="target"/>.</summary>

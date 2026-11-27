@@ -9,6 +9,9 @@ public interface IAppShell
     /// <summary>Opens a folder, file or https address with the default application.</summary>
     void OpenPath(string path);
 
+    /// <summary>Opens a folder in the file explorer and creates it first when it does not exist yet.</summary>
+    void OpenFolder(string path);
+
     void CopyText(string text);
 
     void ApplyTheme(AppTheme theme);

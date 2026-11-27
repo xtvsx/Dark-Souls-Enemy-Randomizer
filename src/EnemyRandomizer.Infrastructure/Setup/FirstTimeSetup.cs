@@ -22,11 +22,12 @@ namespace EnemyRandomizer.Infrastructure.Setup;
 /// <item>all map effects merged into CommonEffects (PTDE: map bundles reduced to their first entry).</item>
 /// </list>
 /// Every step skips work that is already done, so running it again is cheap. Copies are made from the
-/// <c>.bak</c> original when one exists (v0.4.x used the current, possibly randomized, file).
+/// backed-up original when one exists (v0.4.x used the current, possibly randomized, file).
 /// </summary>
 public sealed partial class FirstTimeSetup(
     IGamePaths paths,
     GameFileLayout layout,
+    GameBackups backups,
     IOptions<GameDataSettings> gameData,
     IOptions<MsbModelSettings> models,
     ILogger<FirstTimeSetup> logger) : IFirstTimeSetup
@@ -41,6 +42,9 @@ public sealed partial class FirstTimeSetup(
         var randomized = layout.RandomizedMaps.ToList();
         var total = layout.Maps.Count + randomized.Count + 3;
         var step = 0;
+
+        // Backups of v0.4.x (<file>.bak next to the game file) move into the backup folder before anything reads them.
+        backups.MigrateLegacy(layout.MapFiles(edition).Concat(layout.EffectFiles(edition)).Select(paths.InGame));
 
         Directory.CreateDirectory(paths.MapStudioCopyDirectory);
         Directory.CreateDirectory(paths.MapAiCopyDirectory);
@@ -79,10 +83,10 @@ public sealed partial class FirstTimeSetup(
         return new SetupResult(
             mapCopies.Count,
             mapCopies.Count(f => !File.Exists(f)),
-            mapCopies.Count(f => File.Exists(f) && !BackupFiles.IsValidCopy(f)),
+            mapCopies.Count(f => File.Exists(f) && !GameBackups.IsValidCopy(f)),
             aiCopies.Count,
             aiCopies.Count(f => !File.Exists(f)),
-            aiCopies.Count(f => File.Exists(f) && !BackupFiles.IsValidCopy(f)),
+            aiCopies.Count(f => File.Exists(f) && !GameBackups.IsValidCopy(f)),
             EffectsFailed: false);
     }
 
@@ -97,12 +101,12 @@ public sealed partial class FirstTimeSetup(
     {
         var copy = MapCopy(map.Id);
         var expectedModels = map.StartIndices[edition] + AddedModelCount;
-        if (BackupFiles.IsValidCopy(copy) && MsbFile.Read(File.ReadAllBytes(copy)).Models.Rows.Count >= expectedModels)
+        if (GameBackups.IsValidCopy(copy) && MsbFile.Read(File.ReadAllBytes(copy)).Models.Rows.Count >= expectedModels)
         {
             return;
         }
 
-        var msb = MsbFile.Read(File.ReadAllBytes(BackupFiles.Original(paths.InGame(layout.MapStudio(map.Id)))));
+        var msb = MsbFile.Read(File.ReadAllBytes(backups.Original(paths.InGame(layout.MapStudio(map.Id)))));
         AppendCharacterModels(msb);
         AtomicFile.WriteAllBytes(copy, msb.Write());
         LogMapCopy(logger, map.Id);
@@ -129,9 +133,9 @@ public sealed partial class FirstTimeSetup(
     private void PrepareAiCopy(MapDefinition map, GameEdition edition)
     {
         var copy = AiCopy(map.Id, edition);
-        if (!BackupFiles.IsValidCopy(copy))
+        if (!GameBackups.IsValidCopy(copy))
         {
-            File.Copy(BackupFiles.Original(paths.InGame(layout.AiScript(map.Id, edition))), copy, overwrite: true);
+            File.Copy(backups.Original(paths.InGame(layout.AiScript(map.Id, edition))), copy, overwrite: true);
         }
     }
 
@@ -146,7 +150,7 @@ public sealed partial class FirstTimeSetup(
         var written = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var map in maps)
         {
-            var archive = LuaBnd.Read(File.ReadAllBytes(BackupFiles.Original(paths.InGame(layout.AiScript(map.Id, edition)))));
+            var archive = LuaBnd.Read(File.ReadAllBytes(backups.Original(paths.InGame(layout.AiScript(map.Id, edition)))));
             foreach (var (fileName, data) in archive.AiScripts())
             {
                 var target = Path.Combine(paths.AiScriptDirectory, fileName);
@@ -165,7 +169,7 @@ public sealed partial class FirstTimeSetup(
     private void CleanupV032Backups(GameEdition edition)
     {
         var first = layout.RandomizedMaps.First();
-        var firstBackup = BackupFiles.BackupOf(paths.InGame(layout.MapStudio(first.Id)));
+        var firstBackup = backups.BackupOf(paths.InGame(layout.MapStudio(first.Id)));
         if (!File.Exists(firstBackup)
             || MsbFile.Read(File.ReadAllBytes(firstBackup)).Models.Rows.Count < first.StartIndices[edition] + AddedModelCount)
         {
@@ -177,7 +181,7 @@ public sealed partial class FirstTimeSetup(
         {
             var msb = MsbFile.Read(File.ReadAllBytes(MapCopy(map.Id)));
             msb.Models.Rows.RemoveRange(map.StartIndices[edition], msb.Models.Rows.Count - map.StartIndices[edition]);
-            AtomicFile.WriteAllBytes(BackupFiles.BackupOf(paths.InGame(layout.MapStudio(map.Id))), msb.Write());
+            backups.WriteBackup(paths.InGame(layout.MapStudio(map.Id)), msb.Write());
         }
     }
 
@@ -186,7 +190,7 @@ public sealed partial class FirstTimeSetup(
         Directory.CreateDirectory(paths.ParamBackupDirectory);
         var source = paths.InGame(layout.GameParam(edition));
         var target = Path.Combine(paths.ParamBackupDirectory, Path.GetFileName(source));
-        if (!BackupFiles.IsValidCopy(target))
+        if (!GameBackups.IsValidCopy(target))
         {
             // Copy through a temp file so an interrupted copy never leaves a truncated "original" behind.
             AtomicFile.WriteAllBytes(target, File.ReadAllBytes(source));
@@ -204,9 +208,9 @@ public sealed partial class FirstTimeSetup(
         try
         {
             var common = GameArchive.Read(commonFile);
-            var sources = mapBundles.Select(f => (IReadOnlyList<BndEntry>)GameArchive.Read(BackupFiles.Original(f)).Entries);
+            var sources = mapBundles.Select(f => (IReadOnlyList<BndEntry>)GameArchive.Read(backups.Original(f)).Entries);
             var (merged, changed) = EffectMerger.Merge(sources, common.Entries, edition == GameEdition.Remastered);
-            BackupFiles.EnsureBackup(commonFile);
+            backups.EnsureBackup(commonFile);
             if (changed)
             {
                 AtomicFile.WriteAllBytes(commonFile, common.ToBytes(merged));
@@ -220,7 +224,7 @@ public sealed partial class FirstTimeSetup(
                     var archive = GameArchive.Read(bundle);
                     if (archive.Entries.Count > 1)
                     {
-                        BackupFiles.WriteWithBackup(bundle, archive.ToBytes(EffectMerger.TruncateMapBundle(archive.Entries)));
+                        backups.WriteWithBackup(bundle, archive.ToBytes(EffectMerger.TruncateMapBundle(archive.Entries)));
                     }
                 }
             }

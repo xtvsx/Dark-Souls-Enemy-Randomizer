@@ -32,6 +32,7 @@ internal sealed class TempGameFolder : IDisposable
             },
         };
         Paths = new GamePaths(Settings, Root);
+        Backups = new GameBackups(Paths, Microsoft.Extensions.Options.Options.Create(Settings));
 
         Directory.CreateDirectory(Paths.ReplacementReferenceDirectory);
         File.Copy(
@@ -108,6 +109,8 @@ internal sealed class TempGameFolder : IDisposable
     public AppSettings Settings { get; }
 
     public IGamePaths Paths { get; }
+
+    public GameBackups Backups { get; }
 
     public void Dispose()
     {

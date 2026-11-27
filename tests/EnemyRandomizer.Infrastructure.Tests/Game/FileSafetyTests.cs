@@ -4,9 +4,11 @@ namespace EnemyRandomizer.Infrastructure.Tests.Game;
 
 public sealed class FileSafetyTests : IDisposable
 {
-    private readonly string _folder = Directory.CreateTempSubdirectory("er-safety-").FullName;
+    private readonly TempGameFolder _game = new();
 
-    public void Dispose() => Directory.Delete(_folder, recursive: true);
+    private string _folder => _game.Root;
+
+    public void Dispose() => _game.Dispose();
 
     private string InFolder(string name) => Path.Combine(_folder, name);
 
@@ -40,7 +42,7 @@ public sealed class FileSafetyTests : IDisposable
         var existing = InFolder("existing.bin");
         var created = InFolder("created.bin");
         File.WriteAllBytes(existing, [1, 1]);
-        var transaction = new FileTransaction();
+        var transaction = new FileTransaction(_game.Backups);
 
         transaction.Write(existing, [2]);
         transaction.Write(existing, [3]);   // only the first state counts
@@ -57,11 +59,11 @@ public sealed class FileSafetyTests : IDisposable
     {
         var file = InFolder("map.msb");
         File.WriteAllBytes(file, [5]);
-        File.WriteAllBytes(BackupFiles.BackupOf(file), [0]);
-        var transaction = new FileTransaction();
+        _game.Backups.WriteBackup(file, new byte[20]);
+        var transaction = new FileTransaction(_game.Backups);
 
         Assert.True(transaction.Restore(file));
-        Assert.Equal(new byte[] { 0 }, File.ReadAllBytes(file));
+        Assert.Equal(new byte[20], File.ReadAllBytes(file));
         transaction.Rollback();
 
         Assert.Equal(new byte[] { 5 }, File.ReadAllBytes(file));

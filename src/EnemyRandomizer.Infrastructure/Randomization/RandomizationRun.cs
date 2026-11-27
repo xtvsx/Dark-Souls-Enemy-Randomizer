@@ -21,11 +21,12 @@ public sealed record RandomizationResult(string Seed, int Replaced, string LogFi
 /// <summary>
 /// One complete randomization or placement copy (legacy <c>Randomizer.randomize</c>): prepares copies, resets the event files and
 /// copies the randomizer's custom events, patches NpcParam, plans and writes every map, copies Darkroot Garden and
-/// writes the log and the layout reference. Every changed game file keeps its original as <c>.bak</c>.
+/// writes the log and the layout reference. Every changed game file keeps its original in the backup folder, and the previous randomization is kept as a snapshot.
 /// </summary>
 public sealed class RandomizationRun(
     IGamePaths paths,
     GameFileLayout layout,
+    GameBackups backups,
     IFirstTimeSetup setup,
     IGameDataRepository data,
     IOptions<GameDataSettings> gameData,
@@ -90,7 +91,8 @@ public sealed class RandomizationRun(
         setup.Run(edition, new Progress<OperationProgress>(), cancellationToken);
 
         // Every game file is captured before its first change, so a failure or cancel leaves the game as it was.
-        var transaction = new FileTransaction();
+        var transaction = new FileTransaction(backups);
+        var snapshot = backups.CreateSnapshot(layout.MapFiles(edition).Append(layout.GameParam(edition)).Select(paths.InGame));
         try
         {
             return Apply(transaction, enemyConfig, options, edition, source, progress, cancellationToken);
@@ -98,6 +100,11 @@ public sealed class RandomizationRun(
         catch
         {
             var failed = transaction.Rollback();
+            if (snapshot is not null && failed.Count == 0)
+            {
+                backups.DeleteSnapshot(snapshot); // nothing changed, so the snapshot only repeats the current state
+            }
+
             if (failed.Count > 0)
             {
                 throw new IOException(
@@ -233,7 +240,7 @@ public sealed class RandomizationRun(
             var source = Path.Combine(custom, Path.GetFileName(target));
             if (File.Exists(source))
             {
-                BackupFiles.EnsureBackup(target);
+                backups.EnsureBackup(target);
                 transaction.Copy(source, target);
             }
         }

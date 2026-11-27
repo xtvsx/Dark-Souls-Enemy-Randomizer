@@ -63,6 +63,7 @@ internal sealed class FakeShell : IAppShell
 
     public string? PickFolder(string? initialDirectory) => PickedFolder;
     public void OpenPath(string path) => Opened.Add(path);
+    public void OpenFolder(string path) => Opened.Add(path);
     public void CopyText(string text) => Copied.Add(text);
     public void ApplyTheme(AppTheme theme) => Theme = theme;
     public void Restart() => Restarts++;
@@ -157,6 +158,7 @@ internal sealed class FakePaths : IGamePaths
     public string EmevdDirectory => "C:/game/data/emevd";
     public string AiScriptDirectory => "C:/game/data/aiscripts";
     public string ParamBackupDirectory => "C:/game/data/param";
+    public string BackupDirectory => "C:/game/data/backups";
     public string LastConfigFile => "C:/game/data/lastConfig.json";
     public string LegacyLastConfigFile => "C:/game/data/lastConfig.txt";
 }

@@ -15,6 +15,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddSingleton<IGamePaths, GamePaths>();
         services.AddSingleton<GameFileLayout>();
+        services.AddSingleton<GameBackups>();
         services.AddSingleton<IGameInstallation, GameInstallation>();
 
         // Startup checks, run in registration order (composite).

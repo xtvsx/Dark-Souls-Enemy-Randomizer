@@ -28,6 +28,12 @@ public sealed class AppShell : IAppShell
         }
     }
 
+    public void OpenFolder(string path)
+    {
+        Directory.CreateDirectory(path);
+        OpenPath(path);
+    }
+
     public void CopyText(string text) => Clipboard.SetText(text);
 
     public void ApplyTheme(AppTheme theme) => ThemeService.Apply(theme);

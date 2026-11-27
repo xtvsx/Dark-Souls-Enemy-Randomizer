@@ -29,6 +29,9 @@ public sealed class AppSettings : IValidatableSettings
     /// <summary>How often a failed first-time file copy is retried.</summary>
     public int FileCopyRetries { get; set; }
 
+    /// <summary>How many "before randomization" backups are kept (the initial backup is never removed).</summary>
+    public int MaxBackupSnapshots { get; set; } = 5;
+
     public IEnumerable<string> Validate()
     {
         var errors = ValidationHelpers.RequireText(Title, "App.Title")
@@ -36,6 +39,7 @@ public sealed class AppSettings : IValidatableSettings
             .Concat(ValidationHelpers.RequireAbsoluteUrl(ProjectUrl, "App.ProjectUrl"))
             .Concat(ValidationHelpers.RequireText(DataFolder, "App.DataFolder"))
             .Concat(ValidationHelpers.RequireRange(FileCopyRetries, 1, 50, "App.FileCopyRetries"))
+            .Concat(ValidationHelpers.RequireRange(MaxBackupSnapshots, 0, 50, "App.MaxBackupSnapshots"))
             .Concat(DataFolders.Validate());
 
         foreach (var error in errors)
@@ -52,6 +56,10 @@ public sealed class DataFolderSettings
     public string MapAiCopies { get; set; } = "";
     public string AiScripts { get; set; } = "";
     public string ParamBackup { get; set; } = "";
+
+    /// <summary>Holds the backups of the game files: <c>initial</c> (the original game) and one folder per snapshot.</summary>
+    public string Backups { get; set; } = "backups";
+
     public string Logs { get; set; } = "";
     public string LayoutReferences { get; set; } = "";
     public string CustomConfigs { get; set; } = "";
@@ -67,6 +75,7 @@ public sealed class DataFolderSettings
             [nameof(MapAiCopies)] = MapAiCopies,
             [nameof(AiScripts)] = AiScripts,
             [nameof(ParamBackup)] = ParamBackup,
+            [nameof(Backups)] = Backups,
             [nameof(Logs)] = Logs,
             [nameof(LayoutReferences)] = LayoutReferences,
             [nameof(CustomConfigs)] = CustomConfigs,

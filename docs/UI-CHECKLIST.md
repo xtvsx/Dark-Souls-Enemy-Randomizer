@@ -32,10 +32,12 @@ Run before tagging a release. Use a generated or real game folder.
 - [ ] "Replace NPC-s" offers only Do not replace / With normal enemies.
 
 ## Dialogs
-- [ ] Backups: list matches the `.bak` files in the game folder, Verify re-checks, "Select randomized" + "Restore selected" restores them after confirming; a tiny `.bak` shows as broken and cannot be ticked.
+- [ ] Backups: one list, "Initial game state" first with the "Original game" badge, then one "Before randomization" entry per earlier run (newest first, max 5); no file or map names anywhere. Restore asks first, Delete exists only for snapshots, Verify re-checks, Open backup folder opens `enemyRandomizerData/backups`.
+- [ ] After the first start of this version with an old game folder: no `.bak` files left in the game folder, the initial backup holds them.
+- [ ] About and "About copy info" are the same kind of window (icon, wrapped text, buttons); long text scrolls; no Windows message box appears anywhere, also not in dark mode.
 - [ ] Text config: Generate, Copy, Apply with valid and invalid text (inline error, cleared on edit).
 - [ ] Enemy config editor: invalid name shows an error and disables Save; existing name shows the replace hint.
 
 ## Look
-- [ ] Light, dark and Windows high-contrast mode; check primary button, on/off switch, radio groups, drop-downs, sliders, menu popups, DataGrid.
+- [ ] Switch Light -> Dark -> Follow Windows from the menu while the app runs (and change the Windows app mode in Settings with "Follow Windows" on): every surface changes, no text disappears. Then high-contrast mode; check primary button, on/off switch, radio groups, drop-downs, sliders, menu popups, DataGrid.
 - [ ] 100%, 150% and 200% display scaling; resize to 760x560 (nothing clipped, labels wrap, the sidebar stays usable).

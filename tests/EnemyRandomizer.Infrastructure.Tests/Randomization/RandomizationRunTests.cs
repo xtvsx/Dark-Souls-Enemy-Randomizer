@@ -33,9 +33,9 @@ public sealed class RandomizationRunTests : IDisposable
     {
         _layout = new GameFileLayout(Options.Create(_gameData));
         _data = new GameDataRepository(_folder.Paths, _layout, ShippedSettings.Options<DifficultyCurveSettings>(), NullLogger<GameDataRepository>.Instance);
-        _setup = new FirstTimeSetup(_folder.Paths, _layout, Options.Create(_gameData), ShippedSettings.Options<MsbModelSettings>(), NullLogger<FirstTimeSetup>.Instance);
+        _setup = new FirstTimeSetup(_folder.Paths, _layout, _folder.Backups, Options.Create(_gameData), ShippedSettings.Options<MsbModelSettings>(), NullLogger<FirstTimeSetup>.Instance);
         _run = new RandomizationRun(
-            _folder.Paths, _layout, _setup, _data, Options.Create(_gameData),
+            _folder.Paths, _layout, _folder.Backups, _setup, _data, Options.Create(_gameData),
             ShippedSettings.Options<ReplacementRuleSettings>(), ShippedSettings.Options<MapPatchSettings>(),
             ShippedSettings.Options<DifficultyCurveSettings>(), ShippedSettings.Options<RandomizerOptionSettings>());
     }
@@ -142,7 +142,7 @@ public sealed class RandomizationRunTests : IDisposable
         foreach (var map in _layout.Maps)
         {
             var file = Game(_layout.MapStudio(map.Id));
-            Assert.True(File.Exists(BackupFiles.BackupOf(file)), map.Id);
+            Assert.True(File.Exists(_folder.Backups.BackupOf(file)), map.Id);
 
             var msb = MsbFile.Read(File.ReadAllBytes(file));
             Assert.Equal(2 + 131, msb.Models.Rows.Count);  // written from the copy with all added models
@@ -350,6 +350,48 @@ public sealed class RandomizationRunTests : IDisposable
     }
 
     [Fact]
+    public void First_run_makes_the_initial_backup_and_every_later_run_keeps_the_previous_result_as_a_snapshot()
+    {
+        CreateGame(GameEdition.Remastered);
+        var map = Game(_layout.MapStudio("m15_01_00_00"));
+        var original = File.ReadAllBytes(map);
+
+        Randomize(GameEdition.Remastered, Settings("first"));
+        var afterFirst = File.ReadAllBytes(map);
+
+        Assert.True(_folder.Backups.InitialExists);
+        Assert.Empty(_folder.Backups.SnapshotIds());                 // the game was still original: nothing to snapshot
+        Assert.Equal(original, File.ReadAllBytes(_folder.Backups.BackupOf(map)));
+        Assert.Empty(Directory.EnumerateFiles(_folder.Root, "*.bak", SearchOption.AllDirectories)); // nothing is put next to the game files
+
+        Randomize(GameEdition.Remastered, Settings("second"));
+
+        var id = Assert.Single(_folder.Backups.SnapshotIds());
+        var snapshotMap = _folder.Backups.FilesOf(id).Single(f => Backups_GameFile(id, f) == map);
+        Assert.Equal(afterFirst, File.ReadAllBytes(snapshotMap));    // the snapshot is what the first run left behind
+        Assert.Equal(original, File.ReadAllBytes(_folder.Backups.BackupOf(map))); // the initial backup stays the original
+
+        Assert.True(_folder.Backups.RestoreSnapshot(id) > 0);
+        Assert.Equal(afterFirst, File.ReadAllBytes(map));
+    }
+
+    private string Backups_GameFile(string id, string backupFile) => _folder.Backups.GameFileOf(id, backupFile);
+
+    [Fact]
+    public void A_failed_run_leaves_no_snapshot_behind()
+    {
+        CreateGame(GameEdition.Remastered);
+        Randomize(GameEdition.Remastered, Settings("first"));
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        Assert.ThrowsAny<OperationCanceledException>(() =>
+            _run.Run(Settings("second"), GameEdition.Remastered, NoProgress, cancelled.Token));
+
+        Assert.Empty(_folder.Backups.SnapshotIds()); // nothing changed, so the snapshot would only repeat the current state
+    }
+
+    [Fact]
     public void Revert_after_randomize_restores_the_original_maps()
     {
         CreateGame(GameEdition.Remastered);
@@ -357,7 +399,7 @@ public sealed class RandomizationRunTests : IDisposable
         Randomize(GameEdition.Remastered);
         Assert.NotEqual(original, File.ReadAllBytes(Game(_layout.MapStudio("m15_01_00_00"))));
 
-        new GameRestorer(_folder.Paths, _layout, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance)
+        new GameRestorer(_folder.Paths, _layout, _folder.Backups, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance)
             .Revert(GameEdition.Remastered, restoreEffects: false, NoProgress, TestContext.Current.CancellationToken);
 
         Assert.Equal(original, File.ReadAllBytes(Game(_layout.MapStudio("m15_01_00_00"))));

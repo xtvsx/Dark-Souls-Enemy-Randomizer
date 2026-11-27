@@ -24,7 +24,7 @@ public sealed class SetupTests : IDisposable
     public SetupTests()
     {
         _layout = new GameFileLayout(Options.Create(_gameData));
-        _setup = new FirstTimeSetup(_folder.Paths, _layout, Options.Create(_gameData), Options.Create(_models), NullLogger<FirstTimeSetup>.Instance);
+        _setup = new FirstTimeSetup(_folder.Paths, _layout, _folder.Backups, Options.Create(_gameData), Options.Create(_models), NullLogger<FirstTimeSetup>.Instance);
     }
 
     public void Dispose() => _folder.Dispose();
@@ -81,7 +81,7 @@ public sealed class SetupTests : IDisposable
     {
         _folder.CreateGameFiles(GameEdition.Ptde, _layout);
         var map = Game(_layout.MapStudio("m10_00_00_00"));
-        File.Copy(map, BackupFiles.BackupOf(map));
+        _folder.Backups.WriteBackup(map, File.ReadAllBytes(map));
         var randomized = new MsbFile();
         randomized.Models.Add(32, 2, 0, 38, 1, 0, 0, 0, "c9999", "x");
         File.WriteAllBytes(map, randomized.Write());
@@ -117,7 +117,7 @@ public sealed class SetupTests : IDisposable
 
         var common = Bnd3.Read(Unpack(Game(_layout.Sfx("CommonEffects", edition))));
         Assert.Equal(1 + 23, common.Count);                  // its own entry + one new effect per map bundle
-        Assert.True(File.Exists(BackupFiles.BackupOf(Game(_layout.Sfx("CommonEffects", edition)))));
+        Assert.True(File.Exists(_folder.Backups.BackupOf(Game(_layout.Sfx("CommonEffects", edition)))));
 
         var mapBundle = Bnd3.Read(Unpack(Game(_layout.Sfx("m10", edition))));
         Assert.Equal(edition == GameEdition.Ptde ? 1 : 2, mapBundle.Count); // PTDE map bundles keep the first entry only
@@ -144,7 +144,7 @@ public sealed class SetupTests : IDisposable
         Run(GameEdition.Remastered);
         var map = Game(_layout.MapStudio("m10_00_00_00"));
         var original = File.ReadAllBytes(map);
-        BackupFiles.WriteWithBackup(map, [9, 9, 9]);
+        _folder.Backups.WriteWithBackup(map, [9, 9, 9]);
 
         var param = Game(_layout.GameParam(GameEdition.Remastered));
         var archive = GameArchive.Read(param);
@@ -152,7 +152,7 @@ public sealed class SetupTests : IDisposable
         archive.Entries[3] = archive.Entries[3] with { Data = [3, 3] };       // other params stay as they are
         File.WriteAllBytes(param, archive.ToBytes());
 
-        var restorer = new GameRestorer(_folder.Paths, _layout, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance);
+        var restorer = new GameRestorer(_folder.Paths, _layout, _folder.Backups, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance);
         var result = restorer.Revert(GameEdition.Remastered, restoreEffects: false, NoProgress, TestContext.Current.CancellationToken);
 
         Assert.Equal(original, File.ReadAllBytes(map));
@@ -172,7 +172,7 @@ public sealed class SetupTests : IDisposable
         Run(GameEdition.Ptde);
         Assert.NotEqual(original, File.ReadAllBytes(common));
 
-        var restorer = new GameRestorer(_folder.Paths, _layout, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance);
+        var restorer = new GameRestorer(_folder.Paths, _layout, _folder.Backups, new NoExePatcher(), Options.Create(_gameData), NullLogger<GameRestorer>.Instance);
         restorer.Revert(GameEdition.Ptde, restoreEffects: true, NoProgress, TestContext.Current.CancellationToken);
 
         Assert.Equal(original, File.ReadAllBytes(common));

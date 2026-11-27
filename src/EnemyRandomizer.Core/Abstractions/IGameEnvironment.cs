@@ -28,6 +28,9 @@ public interface IGamePaths
     /// <summary>Original GameParam copy (NpcParam is restored from it).</summary>
     string ParamBackupDirectory { get; }
 
+    /// <summary>Folder with the backups of the game files (initial state and snapshots).</summary>
+    string BackupDirectory { get; }
+
     /// <summary>Settings of the last run (<c>lastConfig.json</c>).</summary>
     string LastConfigFile { get; }
 

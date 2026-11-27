@@ -34,7 +34,7 @@ public sealed class InstallationTests : IDisposable
             new WritePermissionCheck(_folder.Paths, _layout),
         ]),
         new ExePatcher(_folder.Paths, installation, Options.Create(_gameData), NullLogger<ExePatcher>.Instance),
-        new global::EnemyRandomizer.Infrastructure.Setup.FirstTimeSetup(_folder.Paths, _layout, Options.Create(_gameData), ShippedSettings.Options<MsbModelSettings>(), NullLogger<global::EnemyRandomizer.Infrastructure.Setup.FirstTimeSetup>.Instance),
+        new global::EnemyRandomizer.Infrastructure.Setup.FirstTimeSetup(_folder.Paths, _layout, _folder.Backups, Options.Create(_gameData), ShippedSettings.Options<MsbModelSettings>(), NullLogger<global::EnemyRandomizer.Infrastructure.Setup.FirstTimeSetup>.Instance),
         _folder.Paths,
         Options.Create(_folder.Settings),
         NullLogger<InstallationStatus>.Instance);

@@ -2,6 +2,7 @@ using System.Windows;
 using EnemyRandomizer.App.Services;
 using EnemyRandomizer.App.ViewModels;
 using EnemyRandomizer.App.Views;
+using EnemyRandomizer.Core.Abstractions;
 
 namespace EnemyRandomizer.App.Tests.Wpf;
 
@@ -115,5 +116,50 @@ public class DialogWindowTests
         Assert.False(tooSmall);
         Assert.True(height <= maxHeight + 1, $"dialog is {height} high, the limit is {maxHeight}");
         Assert.True(maxHeight < SystemParameters.WorkArea.Height);
+    }
+}
+
+/// <summary>The backup window shows the restore points readably in both themes.</summary>
+[Collection(WpfTestGroup.Name)]
+public class BackupsWindowTests
+{
+    private sealed class FakeBackups : IBackupService
+    {
+        public string BackupDirectory => "C:/game/data/backups";
+
+        public BackupReport Check() => new(
+            [
+                new BackupSet("initial", BackupKind.Initial, new DateTime(2026, 11, 1, 10, 0, 0), 53, 70_000_000, IsCurrent: false, IsBroken: false),
+                new BackupSet("2026-11-27_17-40-12-123", BackupKind.Snapshot, new DateTime(2026, 11, 27, 17, 40, 12), 40, 30_000_000, IsCurrent: true, IsBroken: false),
+            ],
+            GameFilesState.Randomized,
+            BackupDirectory);
+
+        public int Restore(string id, bool restoreEffects) => 0;
+
+        public bool Delete(string id) => false;
+    }
+
+    [Theory]
+    [InlineData(AppTheme.Dark)]
+    [InlineData(AppTheme.Light)]
+    public async Task Backup_window_lists_restore_points_readably(AppTheme theme)
+    {
+        var findings = await WpfTestHost.RunAsync(async () =>
+        {
+            ThemeService.Apply(theme);
+            var viewModel = new BackupsViewModel(new FakeBackups(), new FakeDialogs(), new FakeShell(), ShippedConfig.Get<EnemyRandomizer.Core.Configuration.MessageSettings>());
+            var window = new BackupsWindow(viewModel);
+            UiProbe.ShowOffScreen(window);
+            await viewModel.RefreshCommand.ExecuteAsync(null);
+            UiProbe.Flush();
+            UiProbe.Render(window, $"backups-{theme}");
+            var result = (UiProbe.LowContrastText(window), viewModel.Items.Count);
+            window.Close();
+            return result;
+        });
+
+        Assert.Empty(findings.Item1);
+        Assert.Equal(2, findings.Item2);
     }
 }

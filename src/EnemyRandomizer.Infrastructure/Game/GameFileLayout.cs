@@ -31,6 +31,15 @@ public sealed class GameFileLayout(IOptions<GameDataSettings> gameData)
 
     public string GameParam(GameEdition edition) => Compressed(Data.Folders.GameParam, edition);
 
+    /// <summary>Game files a randomization rewrites (maps, events, AI scripts), relative to the game folder. They keep an original in the backup folder.</summary>
+    public IEnumerable<string> MapFiles(GameEdition edition) =>
+        Data.Maps.SelectMany(m => m.Randomized
+            ? new[] { MapStudio(m.Id), Event(m.Id, edition), AiScript(m.Id, edition) }
+            : [MapStudio(m.Id), Event(m.Id, edition)]);
+
+    /// <summary>Effect files the first-time setup merges, relative to the game folder.</summary>
+    public IEnumerable<string> EffectFiles(GameEdition edition) => Data.FfxFiles.Select(f => Sfx(f, edition));
+
     /// <summary>Reference file names in <c>original_enemies_ref</c> for a map (one, or one per edition).</summary>
     public static IEnumerable<string> OriginalReferenceFiles(MapDefinition map)
     {

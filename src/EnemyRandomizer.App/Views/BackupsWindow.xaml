@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:BackupsViewModel}"
         Style="{StaticResource AppWindow}"
-        Title="Backups" Width="640" Height="560" MinWidth="480" MinHeight="360"
+        Title="Backups" Width="640" Height="520" MinWidth="520" MinHeight="360"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
-  <Grid Margin="16">
+  <Grid Margin="20,16,20,16">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -31,43 +31,49 @@
       </TextBlock.Style>
     </TextBlock>
 
-    <ListView Grid.Row="2" ItemsSource="{Binding Items}" AutomationProperties.Name="Backed up game files"
-              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-      <ListView.GroupStyle>
-        <GroupStyle>
-          <GroupStyle.HeaderTemplate>
-            <DataTemplate>
-              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0,8,0,2" />
-            </DataTemplate>
-          </GroupStyle.HeaderTemplate>
-        </GroupStyle>
-      </ListView.GroupStyle>
-      <ListView.ItemTemplate>
-        <DataTemplate DataType="{x:Type vm:BackupItemViewModel}">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanRestore}" VerticalAlignment="Center"
-                      AutomationProperties.Name="{Binding Name}" />
-            <StackPanel Grid.Column="1" Margin="4,0,8,0">
-              <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
-            </StackPanel>
-            <TextBlock Grid.Column="2" Text="{Binding Date}" FontSize="12" VerticalAlignment="Center"
-                       Foreground="{DynamicResource MutedTextBrush}" />
-          </Grid>
-        </DataTemplate>
-      </ListView.ItemTemplate>
-    </ListView>
+    <!-- Restore points: the first one is the initial state of the game, then one per earlier randomization -->
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ItemsControl ItemsSource="{Binding Items}" IsTabStop="False" AutomationProperties.Name="Backups">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type vm:BackupSetViewModel}">
+            <Border Padding="14,12" Margin="0,0,0,8" CornerRadius="6" BorderThickness="1"
+                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Details}" FontSize="12" Margin="0,2,0,0"
+                             Foreground="{DynamicResource MutedTextBrush}" />
+                  <Border HorizontalAlignment="Left" CornerRadius="3" Padding="8,2" Margin="0,8,0,0"
+                          Background="{DynamicResource AccentSoftBrush}"
+                          Visibility="{Binding HasBadge, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding Badge}" FontSize="12" Foreground="{DynamicResource TextBrush}" />
+                  </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Content="Restore" MinWidth="80"
+                          Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                          CommandParameter="{Binding}" AutomationProperties.Name="{Binding Title, StringFormat='Restore {0}'}" />
+                  <Button Content="Delete" MinWidth="70" Margin="8,0,0,0"
+                          Visibility="{Binding CanDelete, Converter={StaticResource BoolToVisibility}}"
+                          Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                          CommandParameter="{Binding}" AutomationProperties.Name="{Binding Title, StringFormat='Delete {0}'}" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
 
     <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="False">
       <Button DockPanel.Dock="Right" Content="Close" IsCancel="True" IsDefault="True" Margin="8,0,0,0" />
-      <Button DockPanel.Dock="Right" Content="_Restore selected" Command="{Binding RestoreSelectedCommand}" Margin="8,0,0,0" />
-      <Button DockPanel.Dock="Left" Content="_Verify" Command="{Binding RefreshCommand}" Margin="0,0,8,0" />
-      <Button DockPanel.Dock="Left" Content="Select _randomized" Command="{Binding SelectChangedCommand}" />
+      <Button DockPanel.Dock="Left" Content="_Verify" Command="{Binding RefreshCommand}" Margin="0,0,8,0"
+              ToolTip="Check all backups again" />
+      <Button DockPanel.Dock="Left" Content="_Open backup folder" Command="{Binding OpenFolderCommand}" />
     </DockPanel>
   </Grid>
 </Window>

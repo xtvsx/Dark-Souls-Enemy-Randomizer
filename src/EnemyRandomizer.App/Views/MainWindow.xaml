@@ -236,6 +236,7 @@
             <MenuItem Header="About copy _info" Command="{Binding ShowCopyInfoCommand}" />
             <Separator />
             <MenuItem Header="_Backups..." Command="{Binding ShowBackupsCommand}" />
+            <MenuItem Header="Open backup _folder" Command="{Binding OpenBackupFolderCommand}" />
             <MenuItem Header="Restore _default settings" Command="{Binding RestoreDefaultsCommand}" />
             <MenuItem Header="Change game _folder..." Command="{Binding ChooseGameFolderCommand}" />
             <MenuItem Header="_Theme">

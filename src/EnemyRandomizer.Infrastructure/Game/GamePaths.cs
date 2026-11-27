@@ -30,6 +30,7 @@ public sealed class GamePaths : IGamePaths
         EmevdDirectory = Path.Combine(DataDirectory, folders.Emevd);
         AiScriptDirectory = Path.Combine(DataDirectory, folders.AiScripts);
         ParamBackupDirectory = Path.Combine(DataDirectory, folders.ParamBackup);
+        BackupDirectory = Path.Combine(DataDirectory, folders.Backups);
         LastConfigFile = Path.Combine(DataDirectory, "lastConfig.json");
         LegacyLastConfigFile = Path.Combine(DataDirectory, "lastConfig.txt");
     }
@@ -46,6 +47,7 @@ public sealed class GamePaths : IGamePaths
     public string EmevdDirectory { get; }
     public string AiScriptDirectory { get; }
     public string ParamBackupDirectory { get; }
+    public string BackupDirectory { get; }
     public string LastConfigFile { get; }
     public string LegacyLastConfigFile { get; }
 
