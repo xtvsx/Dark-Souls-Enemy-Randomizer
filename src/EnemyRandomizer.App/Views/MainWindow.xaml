@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:EnemyRandomizer.App.ViewModels"
         xmlns:opt="clr-namespace:EnemyRandomizer.App.ViewModels.Options"
+        xmlns:mod="clr-namespace:EnemyRandomizer.App.ViewModels.Modules"
         xmlns:svc="clr-namespace:EnemyRandomizer.App.Services"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Style="{StaticResource AppWindow}"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="900" Height="820" MinWidth="640" MinHeight="560"
+        Width="1020" Height="820" MinWidth="760" MinHeight="560"
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
@@ -196,6 +197,54 @@
     </DockPanel>
 
     <!-- All options on one page, grouped by category -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="210" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Sidebar: one entry per randomizer module, backups below -->
+      <DockPanel Margin="0,0,12,0" LastChildFill="True">
+        <Button DockPanel.Dock="Bottom" Content="_Backups..." Command="{Binding ShowBackupsCommand}" Margin="0,8,0,0"
+                HorizontalAlignment="Stretch" ToolTip="Check, verify and restore the backups of the game files" />
+        <ListBox ItemsSource="{Binding Modules}" SelectedItem="{Binding SelectedModule}"
+                 AutomationProperties.Name="Randomizers" HorizontalContentAlignment="Stretch">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="{x:Type mod:RandomizerModuleViewModel}">
+              <DockPanel Margin="2,4">
+                <TextBlock DockPanel.Dock="Right" Text="{Binding State}" FontSize="12" VerticalAlignment="Center"
+                           Margin="8,0,0,0" Foreground="{DynamicResource MutedTextBrush}" />
+                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" />
+              </DockPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+
+      <Grid Grid.Column="1">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Page header: module title and its on/off switch -->
+        <Grid Margin="0,0,12,12" MaxWidth="780" HorizontalAlignment="Stretch">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="{Binding SelectedModule.Title}" FontSize="22" FontWeight="SemiBold"
+                       AutomationProperties.HeadingLevel="Level1" />
+            <TextBlock Text="{Binding SelectedModule.Summary}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource MutedTextBrush}" />
+          </StackPanel>
+          <ToggleButton Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Top" Margin="12,6,0,0"
+                        Content="{Binding SelectedModule.State}" IsChecked="{Binding SelectedModule.IsEnabled}"
+                        IsEnabled="{Binding SelectedModule.IsAvailable}"
+                        AutomationProperties.Name="{Binding SelectedModule.Title, StringFormat='{}{0} enabled'}" />
+        </Grid>
+
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel MaxWidth="780" HorizontalAlignment="Stretch" Margin="0,0,12,0">
 
@@ -223,11 +272,23 @@
           </StackPanel>
         </Border>
 
-        <ItemsControl ItemsSource="{Binding Sections}" IsTabStop="False" />
+        <!-- Module not implemented yet -->
+        <Border Padding="16" Margin="0,0,0,12" CornerRadius="6" Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                Visibility="{Binding SelectedModule.IsAvailable, Converter={StaticResource InverseBoolToVisibility}}">
+          <TextBlock Text="This randomizer is not available yet. It will appear here, with its own options and switch, in a future version."
+                     TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" />
+        </Border>
+
+        <!-- Options of the module; greyed out while the module is switched off -->
+        <ItemsControl ItemsSource="{Binding SelectedModule.Sections}" IsTabStop="False"
+                      IsEnabled="{Binding SelectedModule.IsEnabled}" />
 
         <!-- Enemy config -->
         <Border Padding="16,14,16,16" Margin="0,0,0,12" CornerRadius="6" Background="{DynamicResource PanelBrush}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                IsEnabled="{Binding SelectedModule.IsEnabled}"
+                Visibility="{Binding SelectedModule.HasEnemyConfig, Converter={StaticResource BoolToVisibility}}">
           <StackPanel>
             <TextBlock Text="Enemy config" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"
                        AutomationProperties.HeadingLevel="Level2" />
@@ -240,6 +301,8 @@
         </Border>
       </StackPanel>
     </ScrollViewer>
+      </Grid>
+    </Grid>
 
     <!-- Result banner -->
     <Border Grid.Row="2" Margin="0,10,0,0" Padding="12,8" CornerRadius="4" BorderThickness="1"
@@ -276,8 +339,6 @@
                 Style="{StaticResource PrimaryButton}" IsDefault="True" ToolTip="Randomize (Ctrl+R)"
                 Margin="8,0,0,0" MinWidth="130" />
         <Button DockPanel.Dock="Right" Content="Re_vert to normal" Command="{Binding RevertCommand}" Margin="8,0,0,0" />
-        <Button DockPanel.Dock="Right" Content="_Backups..." Command="{Binding ShowBackupsCommand}" Margin="8,0,0,0"
-                ToolTip="Check, verify and restore the backups of the game files" />
         <TextBlock Text="{Binding EditionText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    Foreground="{DynamicResource MutedTextBrush}" />
       </DockPanel>

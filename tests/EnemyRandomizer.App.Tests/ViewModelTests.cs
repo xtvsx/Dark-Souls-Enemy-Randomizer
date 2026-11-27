@@ -74,6 +74,49 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void Enemy_module_starts_on_and_item_module_is_a_disabled_placeholder()
+    {
+        var vm = Create();
+
+        var enemies = vm.Modules.Single(m => m.Id == "enemies");
+        var items = vm.Modules.Single(m => m.Id == "items");
+        Assert.True(enemies.IsEnabled);
+        Assert.Equal("On", enemies.State);
+        Assert.False(items.IsAvailable);
+        Assert.False(items.IsEnabled);
+        Assert.Equal("Coming soon", items.State);
+        Assert.Same(enemies, vm.SelectedModule);
+        Assert.Equal(vm.Sections, enemies.Sections);
+    }
+
+    [Fact]
+    public async Task Switching_the_enemy_module_off_blocks_randomize_and_is_remembered()
+    {
+        var vm = await Started();
+        Assert.True(vm.RandomizeCommand.CanExecute(null));
+
+        vm.Modules.Single(m => m.Id == "enemies").IsEnabled = false;
+
+        Assert.False(vm.RandomizeCommand.CanExecute(null));
+        Assert.True(vm.RevertCommand.CanExecute(null)); // reverting stays possible
+        Assert.Equal(["enemies"], _preferences.Current.DisabledModules);
+
+        vm.Modules.Single(m => m.Id == "enemies").IsEnabled = true;
+        Assert.True(vm.RandomizeCommand.CanExecute(null));
+        Assert.Empty(_preferences.Current.DisabledModules);
+    }
+
+    [Fact]
+    public void Module_switched_off_in_an_earlier_session_stays_off()
+    {
+        _preferences.Save(new UserPreferencesData { DisabledModules = ["enemies"] });
+
+        var vm = Create();
+
+        Assert.False(vm.Modules.Single(m => m.Id == "enemies").IsEnabled);
+    }
+
+    [Fact]
     public async Task Effect_write_failure_is_a_warning_only()
     {
         var report = new InstallationReport(GameEdition.Remastered, ExeState.Remastered, [])

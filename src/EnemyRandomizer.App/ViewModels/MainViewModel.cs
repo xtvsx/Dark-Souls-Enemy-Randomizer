@@ -4,6 +4,7 @@ using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EnemyRandomizer.App.Services;
+using EnemyRandomizer.App.ViewModels.Modules;
 using EnemyRandomizer.App.ViewModels.Options;
 using EnemyRandomizer.Core;
 using EnemyRandomizer.Core.Abstractions;
@@ -84,6 +85,15 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
             .Select(t => new OptionSectionViewModel(t.Title, _allOptions.Where(o => o.Definition.Tab == t.Id).ToList()))
             .ToList();
         UpdateOptionStates();
+
+        Modules = [new EnemyRandomizerModuleViewModel(Sections), new ItemRandomizerModuleViewModel()];
+        foreach (var module in Modules)
+        {
+            module.IsEnabled = module.IsAvailable && !_preferences.Current.DisabledModules.Contains(module.Id);
+            module.PropertyChanged += OnModulePropertyChanged;
+        }
+
+        SelectedModule = Modules[0];
 
         _installation = installation;
         _baseTitle = $"{app.Value.Title} v{GetVersion()} (.NET)";
@@ -181,7 +191,25 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
     /// <summary>The option categories, shown one below the other on a single page.</summary>
     public IReadOnlyList<OptionSectionViewModel> Sections { get; }
 
+    /// <summary>The randomizers of the program, one page each in the sidebar.</summary>
+    public IReadOnlyList<RandomizerModuleViewModel> Modules { get; }
+
+    [ObservableProperty]
+    public partial RandomizerModuleViewModel SelectedModule { get; set; }
+
     public ObservableCollection<string> EnemyConfigNames { get; } = [];
+
+    private void OnModulePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(RandomizerModuleViewModel.IsEnabled))
+        {
+            return;
+        }
+
+        var disabled = Modules.Where(m => m.IsAvailable && !m.IsEnabled).Select(m => m.Id).ToList();
+        _preferences.Save(_preferences.Current with { DisabledModules = disabled });
+        RandomizeCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     public partial string Seed { get; set; } = "";
@@ -223,7 +251,7 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
     [RelayCommand]
     private void RestoreDefaults() => Apply(RandomizerSettings.CreateDefault(_options) with { EnemyConfig = SelectedEnemyConfig });
 
-    [RelayCommand(CanExecute = nameof(CanRun))]
+    [RelayCommand(CanExecute = nameof(CanRandomize))]
     private async Task RandomizeAsync()
     {
         var settings = Current;
@@ -337,6 +365,9 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
     }
 
     private bool CanRun() => !IsBusy && Report is { CanRandomize: true };
+
+    /// <summary>Randomizing needs at least one module that is available and switched on.</summary>
+    private bool CanRandomize() => CanRun() && Modules.Any(m => m.IsAvailable && m.IsEnabled);
 
     private bool IsNotBusy() => !IsBusy;
 

@@ -15,6 +15,9 @@ Thanks to rycheNhavalys, the original author of the Enemy Randomizer.
   enemies keep their place. "Shuffle scope" shuffles per area or across the whole game; "Easy asylum (shuffle)" limits the
   Northern Undead Asylum to the easy enemy and boss lists. Config strings of v0.4.x still parse (new options use defaults).
 
+- **Randomizer modules**: the window has a sidebar with one page per randomizer, each with an on/off switch (remembered
+  between runs). The Enemy Randomizer is the first; the Item Randomizer is listed as "Coming soon". Randomize needs at
+  least one module switched on.
 - **Backup manager** ("Backups..." button and menu entry): lists every game file that has a `.bak` backup, whether the
   game file is currently randomized, and whether the backup is usable (broken, too small backups are flagged and never
   restored). "Verify" checks again; "Restore selected" puts chosen files back without a full "Revert to normal".

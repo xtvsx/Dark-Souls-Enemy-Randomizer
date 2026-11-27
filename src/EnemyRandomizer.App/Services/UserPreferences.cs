@@ -19,6 +19,9 @@ public sealed record UserPreferencesData
 
     public AppTheme Theme { get; init; } = AppTheme.System;
 
+    /// <summary>Ids of the randomizer modules the user switched off (new modules start switched on).</summary>
+    public IReadOnlyList<string> DisabledModules { get; init; } = [];
+
     /// <summary>Game folder chosen in the UI; empty means "the folder of the exe".</summary>
     public string GameDirectory { get; init; } = "";
 }

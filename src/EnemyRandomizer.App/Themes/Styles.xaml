@@ -59,6 +59,37 @@
     </Setter>
   </Style>
 
+  <!-- On/off switch (WPF has none): a ToggleButton drawn as a track with a sliding thumb, label on the left. -->
+  <Style x:Key="ToggleSwitch" TargetType="ToggleButton">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <StackPanel Orientation="Horizontal" Background="Transparent">
+            <ContentPresenter VerticalAlignment="Center" Margin="0,0,10,0" RecognizesAccessKey="True" />
+            <Border x:Name="Track" Width="42" Height="22" CornerRadius="11" BorderThickness="1.5"
+                    Background="Transparent" BorderBrush="{DynamicResource MutedTextBrush}">
+              <Ellipse x:Name="Thumb" Width="12" Height="12" HorizontalAlignment="Left" Margin="3,0,0,0"
+                       Fill="{DynamicResource MutedTextBrush}" />
+            </Border>
+          </StackPanel>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}" />
+              <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+              <Setter TargetName="Thumb" Property="Fill" Value="{DynamicResource OnAccentBrush}" />
+              <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right" />
+              <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- Primary action: the Fluent accent button. -->
   <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
     <Setter Property="FontWeight" Value="SemiBold" />
