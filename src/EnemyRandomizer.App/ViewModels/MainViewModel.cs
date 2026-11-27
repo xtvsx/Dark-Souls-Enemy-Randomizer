@@ -191,6 +191,9 @@ public sealed partial class MainViewModel : ObservableObject, ISettingsHost
     /// <summary>The option categories, shown one below the other on a single page.</summary>
     public IReadOnlyList<OptionSectionViewModel> Sections { get; }
 
+    /// <summary>Game folder in use, shown in the sidebar so it can always be seen and changed.</summary>
+    public string GameDirectory => _paths.GameDirectory;
+
     /// <summary>The randomizers of the program, one page each in the sidebar.</summary>
     public IReadOnlyList<RandomizerModuleViewModel> Modules { get; }
 

@@ -9,6 +9,8 @@
   <SolidColorBrush x:Key="AccentSoftBrush" Color="#3A2418" />
   <SolidColorBrush x:Key="WindowBrush" Color="#1F1B18" />
   <SolidColorBrush x:Key="PanelBrush" Color="#2A2521" />
+  <SolidColorBrush x:Key="NavBrush" Color="#161311" />
+  <SolidColorBrush x:Key="NavBorderBrush" Color="#3A342E" />
   <SolidColorBrush x:Key="BorderBrush" Color="#4A433C" />
   <SolidColorBrush x:Key="TextBrush" Color="#EDE7DF" />
   <SolidColorBrush x:Key="MutedTextBrush" Color="#A89F94" />

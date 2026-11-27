@@ -30,8 +30,11 @@ public abstract partial class RandomizerModuleViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
 
-    /// <summary>Small text next to the title in the sidebar.</summary>
-    public string State => !IsAvailable ? "Coming soon" : IsEnabled ? "On" : "Off";
+    /// <summary>Tooltip of a module that cannot be used (yet); <c>null</c> for usable modules.</summary>
+    public virtual string? Hint => null;
+
+    /// <summary>Line under the title in the sidebar: "On" or "Off"; <c>null</c> while the module is unavailable.</summary>
+    public string? State => !IsAvailable ? null : IsEnabled ? "On" : "Off";
 
     partial void OnIsEnabledChanged(bool value) => OnPropertyChanged(nameof(State));
 }
@@ -64,4 +67,6 @@ public sealed class ItemRandomizerModuleViewModel : RandomizerModuleViewModel
     public override string Summary => "Randomize the items found in the world. Planned for a future version.";
 
     public override bool IsAvailable => false;
+
+    public override string? Hint => "Coming soon";
 }

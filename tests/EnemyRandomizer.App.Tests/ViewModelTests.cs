@@ -84,7 +84,8 @@ public class MainViewModelTests
         Assert.Equal("On", enemies.State);
         Assert.False(items.IsAvailable);
         Assert.False(items.IsEnabled);
-        Assert.Equal("Coming soon", items.State);
+        Assert.Null(items.State);
+        Assert.Equal("Coming soon", items.Hint); // shown as tooltip of the disabled sidebar entry
         Assert.Same(enemies, vm.SelectedModule);
         Assert.Equal(vm.Sections, enemies.Sections);
     }

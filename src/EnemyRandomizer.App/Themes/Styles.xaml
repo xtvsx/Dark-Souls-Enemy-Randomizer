@@ -7,6 +7,8 @@
        so everything here must reference them with DynamicResource. -->
 
   <Style x:Key="AppWindow" TargetType="Window">
+    <Setter Property="Background" Value="{DynamicResource WindowBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="UseLayoutRounding" Value="True" />
@@ -59,8 +61,69 @@
     </Setter>
   </Style>
 
+  <!-- Entry of the module sidebar: soft fill and accent bar when selected, greyed (with its tooltip) when unavailable. -->
+  <Style x:Key="NavItem" TargetType="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <Border x:Name="Chrome" CornerRadius="4" Background="Transparent" SnapsToDevicePixels="True">
+            <Grid>
+              <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Margin="0,8" CornerRadius="2" Background="Transparent" />
+              <ContentPresenter Margin="16,8,10,8" />
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HighlightBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+              <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Chrome" Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- One segment of a segmented control: the selected value is filled with the accent colour, so the current state is obvious. -->
+  <Style x:Key="SegmentRadioButton" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Chrome" Background="Transparent" CornerRadius="4" Padding="14,6" Margin="1" SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource HighlightBrush}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- On/off switch (WPF has none): a ToggleButton drawn as a track with a sliding thumb, label on the left. -->
   <Style x:Key="ToggleSwitch" TargetType="ToggleButton">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
     <Setter Property="Template">
       <Setter.Value>
@@ -90,10 +153,36 @@
     </Setter>
   </Style>
 
-  <!-- Primary action: the Fluent accent button. -->
-  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+  <!-- Primary action: filled with our accent colour (Fluent's own accent button would use the Windows accent). -->
+  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Padding" Value="16,8" />
+    <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="1" CornerRadius="4" SnapsToDevicePixels="True">
+            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Chrome" Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
   <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
